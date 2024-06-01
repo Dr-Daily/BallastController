@@ -12,31 +12,54 @@ body {
     margin: 0;
     padding: 0;
 }
-
-.grid_container{
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: black;
-    height: 100vh; /*viewport height*/
-    width: 100%;
-    overflow: hidden;
-    font-size: 60px;
-    color: white; /*Font Color*/
-    /* gap: 1px; Create space for the grid lines */
-
-
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
-    
-}
 .content {
     text-align: center;
     justify-content: stretch;
     /* border: 1px solid red;  */
     display: flex;
     height: 100%; 
+}
+header, footer {
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 60px;
+    border: 1px solid white; /* Add white border */
+}
+header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    background-color: rgb(11, 69, 11);
+}
+.center-header {
+    justify-content: center;
+}
+
+footer {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    background-color: blue;
+}
+.left-footer {
+    justify-content: flex-start;
+}
+.center-footer {
+    justify-content: center;
+}
+.right-footer {
+    justify-content: flex-end;
+}
+
+.nested-j1939-grid{
+    flex: 1;
+    display: grid;
+    grid-template-columns: auto minmax(200px, 1fr) auto;
+    grid-auto-rows: 1fr;
 }
 .nested-ballast-grid{
     flex: 1;
@@ -53,78 +76,9 @@ body {
     align-items: center;
     justify-content: center;
 }
-
-#refresh-button-container {
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-end;
-}
-
-header, footer {
-    color: white;
-    text-align: center;
-    padding: 10px 0;
-    display: flex;
-    justify-content: space-between;
-    font-size: 60px;
-    border: 1px solid white; /* Add white border */
-}
-header {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    background-color: rgb(11, 69, 11);
-}
-.refresh-button {
-    background-color: inherit;
-    color: inherit;
-    border: 0px;
-    /*padding: 20px 40px; /*This is the space around the letters. Make it bigger to get an easier touch.*/
-    font-size: 50px;
-    cursor: pointer;
-    margin: 1; /* Remove margin from the refresh button */
-    width: 100%;
-}
-.refresh-button:hover {
-    background-color: darkgray;
-    color: lightgreen;
-}
-.header-section {
-    flex: 1;
-    padding: 0 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.center-header {
-    justify-content: center;
-}
-footer {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    color: white;
-    padding: 10px;
-    text-align: center;
-}
-.footer-section {
-    flex: 1;
-    padding: 0 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.left-footer {
-    justify-content: flex-start;
-}
-.center-footer {
-    justify-content: center;
-}
-.right-footer {
-    justify-content: flex-end;
-}
-
 .control-button {
     border-radius: 30px ;
-    padding: 20px 0 0 0px;
+    padding: 20px;
     display: flex;
     align-items: center; /* Vertically center */
     justify-content: center; /* Horizontally center */
@@ -135,15 +89,16 @@ footer {
     margin: 0;
     width: 100%;
 }
-
+select {
+    font-size: 60pt;
+    text-align: center;
+}
 
 .tank-container {
     width: 100%;
     height: 100%; 
     display: flex;
     flex-grow: 1;
-    /* border: 5px solid white;
-    border-radius: 30px; */
     position: relative;
     background-color: black;
     border: none;
@@ -162,7 +117,6 @@ footer {
     transform: translateX(-80px);
 }
 .tank-level {
- 
     width: 100%;
     background-color: blue;
     position: absolute;

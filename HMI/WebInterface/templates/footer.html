@@ -3,41 +3,53 @@
         <span id="time"></span>
     </div>
     <div class="footer-section center-footer">
-        Status:&nbsp;<span id="status">OK</span>
+        CAN&nbsp;<span id="CANstate">state</span>&nbsp;(<span id="CANbitrate">bitrate</span>)&nbsp;RX:<span id="CANRXbytes">bitrate</span>
     </div>
     <div class="footer-section right-footer">
         <span id="ip"></span>
     </div>
 </footer>
 <script>
-    function updateTime() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString();
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        const dateString = now.toLocaleDateString('en-GB', options);
-        document.getElementById('time').innerText = `${dateString} ${timeString}`;
-    }
-
-    async function fetchIP() {
-        try {
-            const response = await fetch('/api/ip');
-            const data = await response.json();
-            document.getElementById('ip').innerText = data.ip;
-        } catch (error) {
-            document.getElementById('ip').innerText = 'IP not available';
+    $(document).ready(function() {
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const dateString = now.toLocaleDateString('en-GB', options);
+            document.getElementById('time').innerText = `${dateString} ${timeString}`;
         }
-    }
-    
-    function updateStatus(message){
-        const statusElement = document.getElementById('status');
-        statusElement.textContent = `${message}`;
-    }
 
-    updateTime();
-    setInterval(updateTime, 1000);
+        async function fetchIP() {
+            try {
+                const response = await fetch('/api/ip');
+                const data = await response.json();
+                document.getElementById('ip').innerText = data.ip;
+            } catch (error) {
+                document.getElementById('ip').innerText = 'IP not available';
+            }
+        }
         
-    fetchIP();
-    setInterval(fetchIP, 3000);
+        async function updateCANStatus(message){
+            try {
+                const response = await fetch('/api/can_stats');
+                const data = await response.json();
+                document.getElementById('CANbitrate').innerText = data.CANbitrate;
+                document.getElementById('CANstate').innerText = data.CANstate;
+                document.getElementById('CANRXbytes').innerText = data.CANRXbytes
+            } catch (error) {
+                document.getElementById('CANbitrate').innerText = 'Error';
+                document.getElementById('CANstate').innerText = error;
+                document.getElementById('CANRXbytes').innerText = "N/A"
+            }
+        }
 
-    updateStatus(" Finished Loading")
+        updateTime();
+        setInterval(updateTime, 1000);
+            
+        fetchIP();
+        setInterval(fetchIP, 3001);
+
+        updateCANStatus(" Finished Loading")
+        setInterval(updateCANStatus, 1023);
+    });
 </script>

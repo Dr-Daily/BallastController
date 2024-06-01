@@ -1,11 +1,32 @@
-<header>
-    <div class="header-section left-header">
-        <button class="refresh-button" onclick="location.href='{{ url_for("j1939_display") }}';">J1939 Interface</button>
+<style>
+    #header-button-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    }
+    .header-button {
+        background-color: inherit;
+        color: inherit;
+        border: 0px;
+        font-size: 50px;
+        cursor: pointer;
+        margin: 1; /* Remove margin from the refresh button */
+        width: 100%;
+    }
+    .header-button:hover {
+        background-color: darkgray;
+        color: lightgreen;
+    }
+</style>
+
+<header> <!--Additional style is defined in styles.css-->
+    <div>
+        <button class="header-button" onclick="location.href='{{ url_for("j1939_display") }}';">J1939 Interface</button>
     </div>
-    <div class="header-section center-header">
-        <button class="refresh-button" onclick="location.href='{{ url_for("ballast_control") }}';">Ballast Controller</button>
+    <div>
+        <button class="header-button" onclick="location.href='{{ url_for("ballast_control") }}';">Ballast Controller</button>
     </div>
-    <div class="header-section right-header">
-        <button class="refresh-button" onclick="location.href='{{ url_for("remote_rudder") }}';">Remote Rudder</button>
+    <div>
+        <button class="header-button" onclick="location.href='{{ url_for("remote_rudder") }}';">Remote Rudder</button>
     </div>
 </header>

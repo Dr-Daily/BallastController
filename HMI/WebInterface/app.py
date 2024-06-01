@@ -1,11 +1,24 @@
-from flask import Flask, jsonify,render_template
+#!/python
+from flask import Flask, jsonify,render_template, request
 import subprocess
+import humanize #sudo apt install python3-humanize
 from flask_cors import CORS
 import psutil
 import socket
 
 app = Flask(__name__)
 CORS(app)
+
+# After making changes, run 
+# sudo systemctl restart flask-app.service
+# to restart.
+
+# To debug, run 
+# sudo systemctl status flask-app.service
+#
+# If that's not enough, run
+# journalctl -r 
+# to get the tail end of the system journal
 
 
 ################################################
@@ -44,7 +57,6 @@ def get_ip():
     return jsonify({'ip': ip_address})
 
 
-
 def get_can_stats():
     # Command to get CAN statistics with detailed information
     command = "ip -details -statistics link show can0"
@@ -54,26 +66,25 @@ def get_can_stats():
     
     # Parsing the result
     stats = {}
-    for line in result.stdout.split('\n'):
-        if 'state' in line:
-            stats['State'] = line.split()[-1]
-        if 'bitrate' in line:
-            stats['Bitrate'] = line.split()[-2]
-        if 'RX:' in line:
-            rx_line = line.split()
-            stats['RX packets'] = rx_line[1]
-            stats['RX errors'] = rx_line[2]
-            stats['RX dropped'] = rx_line[3]
-            stats['RX overruns'] = rx_line[4]
-            stats['RX frame'] = rx_line[5]
-        if 'TX:' in line:
-            tx_line = line.split()
-            stats['TX packets'] = tx_line[1]
-            stats['TX errors'] = tx_line[2]
-            stats['TX dropped'] = tx_line[3]
-            stats['TX aborted'] = tx_line[4]
-            stats['TX carrier'] = tx_line[5]
-            stats['TX restart'] = tx_line[6]
+    stat_lines = result.stdout.split('\n')
+    for line in range(len(stat_lines)):
+        if 'can state' in stat_lines[line]:
+            stats['CANstate'] = stat_lines[line].strip().split()[2]
+            if "ERROR" in stats['CANstate']:
+                stats['CANstate'] = stats['CANstate'].split('-')[-1]
+        elif 'bitrate' in stat_lines[line]:
+            bitrate = int(stat_lines[line].strip().split()[1])//1000
+            stats['CANbitrate'] = f"{bitrate}k"
+        elif 'RX:' in stat_lines[line]:
+            rx_header = stat_lines[line].strip().split()[1:] #Remove the "RX:"
+            rx_line = stat_lines[line+1].strip().split()
+            for k,v in zip(rx_header,rx_line):
+                stats['CANRX'+k] = humanize.naturalsize(int(v), binary=True)
+        elif 'TX:' in stat_lines[line]:
+            tx_header = stat_lines[line].strip().split()[1:] #Remove the "TX:"
+            tx_line = stat_lines[line+1].strip().split()
+            for k,v in zip(tx_header,tx_line):
+                stats['CANTX'+k] = v
     
     return stats
 
@@ -81,6 +92,41 @@ def get_can_stats():
 def can_stats():
     stats = get_can_stats()
     return jsonify(stats)
+
+def start_can(bitrate):
+    '''
+    For this function to work, we need to run `sudo visudo` and add the following lines:
+    your_username ALL=(ALL) NOPASSWD: /sbin/ip link set can0 up type can bitrate
+
+    '''
+    try:
+        command = "sudo ip link set can0 down"
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        if result.returncode !=0:
+            return {"status": "error", "output": result.stderr}   
+    except subprocess.CalledProcessError:
+        return {"status": "error", "output": result.stderr}
+    
+    try:
+        command = f"sudo ip link set can0 up type can bitrate {bitrate}"
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            return {"status": "error", "output": result.stderr}
+        else:
+            return {"status": "success", "output": command}
+    except subprocess.CalledProcessError:
+        return {"status": "error", "output": result.stderr}
+
+@app.route('/api/start_can', methods=['POST'])
+def set_bitrate():
+    bitrate = request.form.get('bitrate')
+    try:
+        if int(bitrate) not in [250000, 500000, 125000, 1000000, 666666, 666000]:
+            bitrate = 250000
+        result = start_can(bitrate)
+        return jsonify(result)
+    except ValueError:
+        jsonify({"status": "error", "message": "Improper bitrate specified"}), 400
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

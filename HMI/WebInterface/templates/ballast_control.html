@@ -9,7 +9,7 @@
         <button class="control-button" onclick="alert('Fill Port')">
             <table padding="0" justify="center">
                 <tr>
-                    <td><img src="filling.png" alt="Filling Icon" height="150pt"></td>
+                    <td><img src="{{ url_for('static', filename='images/filling.png') }}" alt="Filling Icon" height="150pt"></td>
                     <td>Port Fill</td>
                 </tr>
             </table> 
@@ -19,7 +19,7 @@
         <button class="control-button" style="background-color: lightgreen;" onclick="alert('Fill Center')">
             <table padding="0" justify="center">
                 <tr>
-                    <td><img src="filling.png" alt="Filling Icon" height="150pt"></td>
+                    <td><img src="{{ url_for('static', filename='images/filling.png') }}" alt="Filling Icon" height="150pt"></td>
                     <td>Center Fill</td>
                 </tr>
             </table> 
@@ -29,7 +29,7 @@
         <button class="control-button" onclick="alert('Fill Starboard')">
             <table padding="0" justify="center">
                 <tr>
-                    <td><img src="filling.png" alt="Filling Icon" height="150pt"></td>
+                    <td><img src="{{ url_for('static', filename='images/filling.png') }}" alt="Filling Icon" height="150pt"></td>
                     <td>Starboard Fill</td>
                 </tr>
             </table> 
@@ -38,7 +38,7 @@
     <div class="grid-cell">
         <button div class="tank-container" onclick="alert('Stop Port')">
             <div id="portTankLevel" class="tank-level"></div>
-            <div id="portTankGraphic" class="tank-graphic"><img src="PortTankonBoat3.png" alt="portTank" height="100%"></div>
+            <div id="portTankGraphic" class="tank-graphic"><img src="{{ url_for('static', filename='images/PortTankonBoat3.png') }}" alt="portTank" height="100%"></div>
             <div class="tank-label">Port</div>
             <div id="portTankPercentage" class="tank-percentage"></div>
             <div id="portTankMessage" class="tank-message">message</div>
@@ -47,7 +47,7 @@
     <div class="grid-cell">
         <button div class="tank-container" onclick="alert('Stop Center')">
             <div id="centerTankLevel" class="tank-level"></div>
-            <div id="centerTankGraphic" class="tank-graphic"><img src="CenterTankOnBoat3.png" alt="portTank" height="100%"></div>
+            <div id="centerTankGraphic" class="tank-graphic"><img src="{{ url_for('static', filename='images/CenterTankOnBoat3.png') }}" alt="portTank" height="100%"></div>
             <div class="tank-label">Center</div>
             <div id="centerTankPercentage" class="tank-percentage"></div>
             <div id="centerTankMessage" class="tank-message">message</div>
@@ -56,7 +56,7 @@
     <div class="grid-cell">
         <button div class="tank-container" onclick="alert('Stop Starboard')">
             <div id="starboardTankLevel" class="tank-level"></div>
-            <div id="starboardTankGraphic" class="tank-graphic"><img src="StarboardTankOnBoat3.png" alt="portTank" height="100%"></div>
+            <div id="starboardTankGraphic" class="tank-graphic"><img src="{{ url_for('static', filename='images/StarboardTankOnBoat3.png') }}" alt="portTank" height="100%"></div>
             <div class="tank-label">Starboard</div>
             <div id="starboardTankPercentage" class="tank-percentage"></div>
             <div id="starboardTankMessage" class="tank-message">message</div>
@@ -66,7 +66,7 @@
         <button  id="port-drain-container" class="control-button" style="background-color: salmon;" onclick="alert('port Drain')">
             <table>
                 <tr>
-                    <td><img src="emptying.png" alt="Emptying Icon" height="150pt"></td>
+                    <td><img src="{{ url_for('static', filename='images/emptying.png') }}" alt="Emptying Icon" height="150pt"></td>
                     <td>Port Drain</td>
                 </tr>
             </table> 
@@ -76,7 +76,7 @@
         <button id="CenterDrainButton" class="control-button" style="background-color: salmon;" onclick="alert('Center Drain')">
             <table>
                 <tr>
-                    <td><img src="emptying.png" alt="Empyting Icon" height="150pt"></td>
+                    <td><img src="{{ url_for('static', filename='images/emptying.png') }}" alt="Empyting Icon" height="150pt"></td>
                     <td>Center Drain</td>
                 </tr>
             </table> 
@@ -86,7 +86,7 @@
         <button id="starboardDrainButton" class="control-button" style="background-color: salmon;" onclick="alert('Starboard Drain')">
             <table>
                 <tr>
-                    <td><img src="emptying.png" alt="Emptying Icon" height="150pt"></td>
+                    <td><img src="{{ url_for('static', filename='images/emptying.png') }}" alt="Emptying Icon" height="150pt"></td>
                     <td>Starboard Drain</td>
                 </tr>
             </table> 

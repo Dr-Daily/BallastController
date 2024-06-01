@@ -1,24 +1,70 @@
-<!-- templates/ballast_control.html -->
+<!-- templates/j1939_display.html -->
 {% extends 'base.html' %}
 
 {% block title %}Ballast Controller{% endblock %}
 
 {% block content %}
-<h1>CAN Data Identifier Table</h1>
-<table id="data-table">
-    <thead>
-        <tr>
-            <th>CAN ID</th>
-            <th>Count</th>
-            <th>Time Delta</th>
-            <th>Data</th>
-        </tr>
-    </thead>
-    <tbody></tbody>
-</table>
+<script>
+        function setBitrate(event) {
+            event.preventDefault(); // Prevent the form from submitting normally
+            var bitrate = document.getElementById("bitrate-select").value;
+            if (bitrate) {
+                fetch('/api/start_can', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'bitrate': bitrate
+                    })
+                })
+                .then(response => response.json())
+                
+                .then(data => {
+                    if (data.status === "success") {
+                        alert("Bitrate set successfully!");
+                    } else {
+                        alert("Error: " + data.message);
+                    }
+                })
+                .catch(error => alert("An error occurred: " + error));
+            } else {
+                alert("Please select a bitrate.");
+            }
+        }
+</script>
+<style>
+
+</style>
+
+<div class="grid-cell" id="can-commands">
+    <form  id="bitrate-form" method="POST">
+        <!-- <label for="bitrate-select">CAN bitrate:</label> -->
+        <select id="bitrate-select"  name="bitrate" onchange="setBitrate(event)">
+            <option value="" selected disabled>Bus Speed</option>
+            <option value="125000">125k</option>
+            <option value="250000">250k</option>
+            <option value="500000">500k</option>
+            <option value="666666">666k</option>
+            <option value="1000000">1M</option>
+        </select>
+    </form>
+    <!-- <button class=control-button type="submit">Start CAN</button> -->
+</div>
+<div class="grid-cell" id="j193-data">
+    item 2
+</div>
+<div class="grid-cell" id="j1939-graphs">
+    item 3
+</div>
+
 
 <script>
+   
+   
+   
     $(document).ready(function() {
+        
         const ws = new WebSocket('ws://192.168.1.136:8765');
 
         ws.onopen = function() {
@@ -33,22 +79,22 @@
             console.log('Disconnected from WebSocket');
         };
 
-        ws.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            const tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
-            tableBody.innerHTML = ''; // Clear the table body
+        // ws.onmessage = function(event) {
+        //     const data = JSON.parse(event.data);
+        //     const tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
+        //     tableBody.innerHTML = ''; // Clear the table body
 
-            Object.keys(data.IDs).forEach(can_id => {
-                const countData = data.IDs[can_id].count;
-                const deltaData = data.IDs[can_id].time_delta || "N/A"; // Ensure time_delta exists
-                const bytesData = JSON.stringify(data.IDs[can_id].data) || "N/A"; // Ensure data exists and convert to string
+        //     Object.keys(data.IDs).forEach(can_id => {
+        //         const countData = data.IDs[can_id].count;
+        //         const deltaData = data.IDs[can_id].time_delta || "N/A"; // Ensure time_delta exists
+        //         const bytesData = JSON.stringify(data.IDs[can_id].data) || "N/A"; // Ensure data exists and convert to string
 
-                const row = tableBody.insertRow();
-                row.insertCell(0).textContent = can_id;
-                row.insertCell(1).textContent = countData;
-                row.insertCell(2).textContent = deltaData;
-                row.insertCell(3).textContent = bytesData;
-            });
+        //         const row = tableBody.insertRow();
+        //         row.insertCell(0).textContent = can_id;
+        //         row.insertCell(1).textContent = countData;
+        //         row.insertCell(2).textContent = deltaData;
+        //         row.insertCell(3).textContent = bytesData;
+        //     });
         };
     });
 </script>

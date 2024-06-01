@@ -1,0 +1,158 @@
+<!-- templates/ballast_control.html -->
+{% extends 'base.html' %}
+
+{% block title %}Ballast Controller{% endblock %}
+
+{% block content %}
+<div class="nested-ballast-grid" id="ballast-grid">
+    <div class="grid-cell" id="port-fill-container" >
+        <button class="control-button" onclick="alert('Fill Port')">
+            <table padding="0" justify="center">
+                <tr>
+                    <td><img src="filling.png" alt="Filling Icon" height="150pt"></td>
+                    <td>Port Fill</td>
+                </tr>
+            </table> 
+        </button>
+    </div>
+    <div class="grid-cell" id="center-fill-container" >
+        <button class="control-button" style="background-color: lightgreen;" onclick="alert('Fill Center')">
+            <table padding="0" justify="center">
+                <tr>
+                    <td><img src="filling.png" alt="Filling Icon" height="150pt"></td>
+                    <td>Center Fill</td>
+                </tr>
+            </table> 
+        </button>
+    </div>
+    <div class="grid-cell" id="starboard-fill-container" >
+        <button class="control-button" onclick="alert('Fill Starboard')">
+            <table padding="0" justify="center">
+                <tr>
+                    <td><img src="filling.png" alt="Filling Icon" height="150pt"></td>
+                    <td>Starboard Fill</td>
+                </tr>
+            </table> 
+        </button>
+    </div>
+    <div class="grid-cell">
+        <button div class="tank-container" onclick="alert('Stop Port')">
+            <div id="portTankLevel" class="tank-level"></div>
+            <div id="portTankGraphic" class="tank-graphic"><img src="PortTankonBoat3.png" alt="portTank" height="100%"></div>
+            <div class="tank-label">Port</div>
+            <div id="portTankPercentage" class="tank-percentage"></div>
+            <div id="portTankMessage" class="tank-message">message</div>
+        </button>
+    </div>
+    <div class="grid-cell">
+        <button div class="tank-container" onclick="alert('Stop Center')">
+            <div id="centerTankLevel" class="tank-level"></div>
+            <div id="centerTankGraphic" class="tank-graphic"><img src="CenterTankOnBoat3.png" alt="portTank" height="100%"></div>
+            <div class="tank-label">Center</div>
+            <div id="centerTankPercentage" class="tank-percentage"></div>
+            <div id="centerTankMessage" class="tank-message">message</div>
+        </button>
+    </div>
+    <div class="grid-cell">
+        <button div class="tank-container" onclick="alert('Stop Starboard')">
+            <div id="starboardTankLevel" class="tank-level"></div>
+            <div id="starboardTankGraphic" class="tank-graphic"><img src="StarboardTankOnBoat3.png" alt="portTank" height="100%"></div>
+            <div class="tank-label">Starboard</div>
+            <div id="starboardTankPercentage" class="tank-percentage"></div>
+            <div id="starboardTankMessage" class="tank-message">message</div>
+        </button>
+    </div>
+    <div class="grid-cell" id="port-drain-container">
+        <button  id="port-drain-container" class="control-button" style="background-color: salmon;" onclick="alert('port Drain')">
+            <table>
+                <tr>
+                    <td><img src="emptying.png" alt="Emptying Icon" height="150pt"></td>
+                    <td>Port Drain</td>
+                </tr>
+            </table> 
+        </button>
+    </div>
+    <div class="grid-cell" id="center-drain-container" >
+        <button id="CenterDrainButton" class="control-button" style="background-color: salmon;" onclick="alert('Center Drain')">
+            <table>
+                <tr>
+                    <td><img src="emptying.png" alt="Empyting Icon" height="150pt"></td>
+                    <td>Center Drain</td>
+                </tr>
+            </table> 
+        </button>
+    </div>
+    <div class="grid-cell" id="starboard-drain-container" >
+        <button id="starboardDrainButton" class="control-button" style="background-color: salmon;" onclick="alert('Starboard Drain')">
+            <table>
+                <tr>
+                    <td><img src="emptying.png" alt="Emptying Icon" height="150pt"></td>
+                    <td>Starboard Drain</td>
+                </tr>
+            </table> 
+        </button>
+    </div>
+    <div class="grid-cell">Port Timer</div>
+    <div class="grid-cell">Center Timer</div>
+    <div class="grid-cell">Starboard Timer</div>
+    <div class="grid-cell">Port Water Sensor</div>
+    <div class="grid-cell">Center Water Sensor</div>
+    <div class="grid-cell">Starboard Water Sensor</div>
+</div>
+
+<script>
+    function updateTankLevel(level,tank) {
+        let tankLevelElement;
+        let tankPercentageElement;
+        if (tank == "port"){
+            tankLevelElement = document.getElementById('portTankLevel');
+            tankPercentageElement = document.getElementById('portTankPercentage');
+        }
+        else if (tank == 'center'){
+            tankLevelElement = document.getElementById('centerTankLevel');
+            tankPercentageElement = document.getElementById('centerTankPercentage');
+        }
+        else if (tank == 'starboard'){
+            tankLevelElement = document.getElementById('starboardTankLevel');
+            tankPercentageElement = document.getElementById('starboardTankPercentage');
+        }
+        else {
+            return;
+        }
+
+        if (level < 0) level = 0;
+        if (level > 100) level = 100;
+        
+        tankLevelElement.style.height = `${level}%`;
+        tankPercentageElement.textContent = `${level}%`;
+    }
+    
+    function updateTankMessage(message,tank) {
+        let tankMessageElement;
+        if (tank == "port"){
+            tankMessageElement = document.getElementById('portTankMessage');
+        }
+        else if (tank == 'center'){
+            tankMessageElement = document.getElementById('centerTankMessage');
+        }
+        else if (tank == 'starboard'){
+            tankMessageElement = document.getElementById('starboardTankMessage');
+        }
+        else {
+            return;
+        }
+        tankMessageElement.innerHTML = `${message}`;
+    }
+
+    
+
+    updateTankLevel(12,"port");
+    updateTankLevel(62,"center");
+    updateTankLevel(99,"starboard");
+    updateTankLevel(50,"");
+    
+    updateTankMessage("Off","port");
+    updateTankMessage('Filling...<br><span style="font-size: 36pt;">(Press to Stop)</span>',"center");
+    updateTankMessage('Draining...<br><span style="font-size: 36pt;">(Press to Stop)</span>',"starboard");
+</script>
+{% endblock %}

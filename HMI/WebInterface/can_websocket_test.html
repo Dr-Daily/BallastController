@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Data Tree</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        .indent {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Data Tree</h1>
+    <div id="json-container"></div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:8765');
+        ws.onopen = function() {
+            console.log('Connected to WebSocket');
+        };
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            // tableBody.innerHTML = ''; // Clear the table body
+            // appendDataToTable(data, '', tableBody);
+            displayJson(data)
+        };
+
+        ws.onerror = function(event) {
+            console.error('WebSocket error observed:', event);
+        };
+
+        ws.onclose = function() {
+            console.log('Disconnected from WebSocket');
+        };
+
+        function appendDataToTable(data, prefix, tableBody) {
+            for (const key in data) {
+                if (data.hasOwnProperty(key)) {
+                    const row = tableBody.insertRow();
+                    const keyCell = row.insertCell(0);
+                    const countCell = row.insertCell(1);
+
+                    keyCell.textContent = prefix + key;
+                    if (typeof data[key] === 'object' && data[key] !== null && 'count' in data[key]) {
+                        countCell.textContent = data[key].count;
+                        delete data[key].count;
+                        appendDataToTable(data[key], prefix + ' > ', tableBody);
+                    } else {
+                        countCell.textContent = data[key];
+                    }
+                }
+            }
+        }
+        function displayJson(json) {
+            // Convert JSON object to a pretty-printed string
+            const prettyJson = JSON.stringify(json, null, 2);
+            // Display the JSON string in a <pre> tag
+            $('#json-container').html('<pre>' + prettyJson + '</pre>');
+        }
+    </script>
+</body>
+</html>

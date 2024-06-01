@@ -1,0 +1,43 @@
+<footer>
+    <div class="footer-section left-footer">
+        <span id="time"></span>
+    </div>
+    <div class="footer-section center-footer">
+        Status:&nbsp;<span id="status">OK</span>
+    </div>
+    <div class="footer-section right-footer">
+        <span id="ip"></span>
+    </div>
+</footer>
+<script>
+    function updateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const dateString = now.toLocaleDateString('en-GB', options);
+        document.getElementById('time').innerText = `${dateString} ${timeString}`;
+    }
+
+    async function fetchIP() {
+        try {
+            const response = await fetch('/api/ip');
+            const data = await response.json();
+            document.getElementById('ip').innerText = data.ip;
+        } catch (error) {
+            document.getElementById('ip').innerText = 'IP not available';
+        }
+    }
+    
+    function updateStatus(message){
+        const statusElement = document.getElementById('status');
+        statusElement.textContent = `${message}`;
+    }
+
+    updateTime();
+    setInterval(updateTime, 1000);
+        
+    fetchIP();
+    setInterval(fetchIP, 3000);
+
+    updateStatus(" Finished Loading")
+</script>

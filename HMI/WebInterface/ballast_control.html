@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ballast Tank Controller</title>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            const ws = new WebSocket("ws://" + window.location.hostname + ":8765/");
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                document.getElementById("sensorData").innerText = data.PGN + " " + data.can_data;
+            };
+        });
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto auto 1fr auto auto auto;
+            height: 1440px;
+            width: 2560px;
+            overflow: hidden;
+            font-size: 60px;
+            color: white; /*Font Color*/
+            /* gap: 1px; Create space for the grid lines */
+        }
+        .grid-cell {
+            border: 1px solid white; /* Add white grid lines */
+            padding: 1px; /* Add padding for better spacing */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #control-button-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .control-button {
+            border-radius: 30px ;
+            padding: 20px 0 0 0px;
+            display: flex;
+            align-items: center; /* Vertically center */
+            justify-content: center; /* Horizontally center */
+            color: black;
+            border: none;
+            font-size: 72px;
+            cursor: pointer;
+            margin: 0;
+            width: 100%;
+        }
+        #refresh-button-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+        }
+        
+        header, footer {
+            grid-column: 1 / 4;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 60px;
+            border: 1px solid white; /* Add white border */
+        }
+        header {
+            background-color: rgb(11, 69, 11);
+        }
+        .refresh-button {
+            background-color: inherit;
+            color: inherit;
+            border: 0px;
+            /*padding: 20px 40px; /*This is the space around the letters. Make it bigger to get an easier touch.*/
+            font-size: 60px;
+            cursor: pointer;
+            margin: 1; /* Remove margin from the refresh button */
+            width: 100%;
+        }
+        .refresh-button:hover {
+            background-color: darkgray;
+            color: lightgreen;
+        }
+        .header-section {
+            flex: 1;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .center-header {
+            justify-content: center;
+        }
+        footer {
+            background-color: rgb(0, 174, 255);
+        }
+        .footer-section {
+            flex: 1;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .left-footer {
+            justify-content: flex-start;
+        }
+        .center-footer {
+            justify-content: center;
+        }
+        .right-footer {
+            justify-content: flex-end;
+        }
+        .tank-container {
+            width: 100%;
+            height: 100%;
+            /* border: 5px solid white;
+            border-radius: 30px; */
+            position: relative;
+            background-color: black;
+        }
+        .tank-graphic {
+            width: 50%;
+            height: 100%;
+            /* border: 5px solid white;
+            border-radius: 30px; */
+            position: absolute;
+            bottom: 0%;
+            background-color: transparent;
+            align-items: left;
+            transform: translateX(-80px);
+        }
+        .tank-level {
+            width: 99%;
+            background-color: blue;
+            position: absolute;
+            bottom: 0%;
+            border-radius: 30px 30px 0 0;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            font-size: 72pt;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tank-label {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 10px;
+            font-size: 90pt;
+            color: whitesmoke
+        }
+        .tank-percentage {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            bottom: 10pt;
+            /* transform: translateY(50%); */
+            font-size: 90pt;
+            color: white;
+            font-weight: bold;
+        }
+        .tank-message {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            bottom: 50%;
+            transform: translateY(50%);
+            font-size: 72pt;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-section left-header">
+            <span id="sensorData">Waiting for data...</span>
+        </div>
+        <div class="header-section center-header">
+            <button class="refresh-button" onclick="location.reload()"><span id="title">Ballast Controller</span></button>
+        </div>
+        <div class="header-section right-header">
+            <span id="fill"></span>
+        </div>
+    </header>
+    <div id="port-fill-container" class="grid-cell">
+        <button class="control-button" onclick="alert('Fill Port')">
+            <table padding="0" justify="center">
+                <tr>
+                    <td><img src="filling.png" alt="Filling Icon" height="150pt"></td>
+                    <td>Port Fill</td>
+                </tr>
+            </table> 
+        </button>
+    </div>
+    <div id="center-fill-container" class="grid-cell">
+        <button class="control-button" style="background-color: lightgreen;" onclick="alert('Fill Center')">
+            <table padding="0" justify="center">
+                <tr>
+                    <td><img src="filling.png" alt="Filling Icon" height="150pt"></td>
+                    <td>Center Fill</td>
+                </tr>
+            </table> 
+        </button>
+    </div>
+    <div id="starboard-fill-container" class="grid-cell">
+        <button class="control-button" onclick="alert('Fill Starboard')">
+            <table padding="0" justify="center">
+                <tr>
+                    <td><img src="filling.png" alt="Filling Icon" height="150pt"></td>
+                    <td>Starboard Fill</td>
+                </tr>
+            </table> 
+        </button>
+    </div>
+    <div class="grid-cell">
+        <button div class="tank-container" onclick="alert('Stop Port')">
+            <div id="portTankLevel" class="tank-level"></div>
+            <div id="portTankGraphic" class="tank-graphic"><img src="PortTankonBoat3.png" alt="portTank" height="100%"></div>
+            <div class="tank-label">Port</div>
+            <div id="portTankPercentage" class="tank-percentage"></div>
+            <div id="portTankMessage" class="tank-message">message</div>
+        </button>
+    </div>
+    <div class="grid-cell">
+        <button div class="tank-container" onclick="alert('Stop Center')">
+            <div id="centerTankLevel" class="tank-level"></div>
+            <div id="centerTankGraphic" class="tank-graphic"><img src="CenterTankOnBoat3.png" alt="portTank" height="100%"></div>
+            <div class="tank-label">Center</div>
+            <div id="centerTankPercentage" class="tank-percentage"></div>
+            <div id="centerTankMessage" class="tank-message">message</div>
+        </button>
+    </div>
+    <div class="grid-cell">
+        <button div class="tank-container" onclick="alert('Stop Starboard')">
+            <div id="starboardTankLevel" class="tank-level"></div>
+            <div id="starboardTankGraphic" class="tank-graphic"><img src="StarboardTankOnBoat3.png" alt="portTank" height="100%"></div>
+            <div class="tank-label">Starboard</div>
+            <div id="starboardTankPercentage" class="tank-percentage"></div>
+            <div id="starboardTankMessage" class="tank-message">message</div>
+        </button>
+    </div>
+    <div id="port-drain-container"class="grid-cell">
+        <button  id="port-drain-container" class="control-button" style="background-color: salmon;" onclick="alert('port Drain')">
+            <table>
+                <tr>
+                    <td><img src="emptying.png" alt="Emptying Icon" height="150pt"></td>
+                    <td>Port Drain</td>
+                </tr>
+            </table> 
+        </button></div>
+    <div id="center-drain-container" class="grid-cell">
+        <button id="CenterDrainButton" class="control-button" style="background-color: salmon;" onclick="alert('Center Drain')">
+            <table>
+                <tr>
+                    <td><img src="emptying.png" alt="Empyting Icon" height="150pt"></td>
+                    <td>Center Drain</td>
+                </tr>
+            </table> 
+        </button>
+    </div>
+    <div id="starboard-drain-container" class="grid-cell">
+        <button id="starboardDrainButton" class="control-button" style="background-color: salmon;" onclick="alert('Starboard Drain')">
+            <table>
+                <tr>
+                    <td><img src="emptying.png" alt="Emptying Icon" height="150pt"></td>
+                    <td>Starboard Drain</td>
+                </tr>
+            </table> 
+        </button>
+    </div>
+    <div class="grid-cell">Port Timer</div>
+    <div class="grid-cell">Center Timer</div>
+    <div class="grid-cell">Starboard Timer</div>
+    <div class="grid-cell">Port Water Sensor</div>
+    <div class="grid-cell">Center Water Sensor</div>
+    <div class="grid-cell">Starboard Water Sensor</div>
+    <footer>
+        <div class="footer-section left-footer">
+            <span id="time"></span>
+        </div>
+        <div class="footer-section center-footer">
+            Status:&nbsp;<span id="status">OK</span>
+        </div>
+        <div class="footer-section right-footer">
+            <span id="ip"></span>
+        </div>
+    </footer>
+
+    <script>
+        async function fetchData() {
+            const response = await fetch('/api/data');
+            const data = await response.json();
+            document.getElementById('data').innerText = JSON.stringify(data, null, 2);
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const dateString = now.toLocaleDateString('en-GB', options);
+            document.getElementById('time').innerText = `${dateString} ${timeString}`;
+        }
+
+        async function fetchIP() {
+            try {
+                const response = await fetch('/api/ip');
+                const data = await response.json();
+                document.getElementById('ip').innerText = data.ip;
+            } catch (error) {
+                document.getElementById('ip').innerText = 'IP not available';
+            }
+        }
+
+        function updateTankLevel(level,tank) {
+            let tankLevelElement;
+            let tankPercentageElement;
+            if (tank == "port"){
+                tankLevelElement = document.getElementById('portTankLevel');
+                tankPercentageElement = document.getElementById('portTankPercentage');
+            }
+            else if (tank == 'center'){
+                tankLevelElement = document.getElementById('centerTankLevel');
+                tankPercentageElement = document.getElementById('centerTankPercentage');
+            }
+            else if (tank == 'starboard'){
+                tankLevelElement = document.getElementById('starboardTankLevel');
+                tankPercentageElement = document.getElementById('starboardTankPercentage');
+            }
+            else {
+                return;
+            }
+
+            if (level < 0) level = 0;
+            if (level > 100) level = 100;
+            
+            tankLevelElement.style.height = `${level}%`;
+            tankPercentageElement.textContent = `${level}%`;
+        }
+       
+        function updateTankMessage(message,tank) {
+            let tankMessageElement;
+            if (tank == "port"){
+                tankMessageElement = document.getElementById('portTankMessage');
+            }
+            else if (tank == 'center'){
+                tankMessageElement = document.getElementById('centerTankMessage');
+            }
+            else if (tank == 'starboard'){
+                tankMessageElement = document.getElementById('starboardTankMessage');
+            }
+            else {
+                return;
+            }
+            tankMessageElement.innerHTML = `${message}`;
+        }
+
+        function updateStatus(message){
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = `${message}`;
+        }
+
+        updateTankLevel(12,"port");
+        updateTankLevel(62,"center");
+        updateTankLevel(99,"starboard");
+        updateTankLevel(50,"");
+        
+        updateTankMessage("Off","port");
+        updateTankMessage('Filling...<br><span style="font-size: 36pt;">(Press to Stop)</span>',"center");
+        updateTankMessage('Draining...<br><span style="font-size: 36pt;">(Press to Stop)</span>',"starboard");
+        
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        fetchIP();
+        updateStatus(" Finished Loading")
+    </script>
+</body>
+</html>

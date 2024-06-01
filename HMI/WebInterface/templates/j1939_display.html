@@ -1,0 +1,55 @@
+<!-- templates/ballast_control.html -->
+{% extends 'base.html' %}
+
+{% block title %}Ballast Controller{% endblock %}
+
+{% block content %}
+<h1>CAN Data Identifier Table</h1>
+<table id="data-table">
+    <thead>
+        <tr>
+            <th>CAN ID</th>
+            <th>Count</th>
+            <th>Time Delta</th>
+            <th>Data</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+    $(document).ready(function() {
+        const ws = new WebSocket('ws://192.168.1.136:8765');
+
+        ws.onopen = function() {
+            console.log('Connected to WebSocket');
+        };
+
+        ws.onerror = function(event) {
+            console.error('WebSocket error observed:', event);
+        };
+
+        ws.onclose = function() {
+            console.log('Disconnected from WebSocket');
+        };
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = ''; // Clear the table body
+
+            Object.keys(data.IDs).forEach(can_id => {
+                const countData = data.IDs[can_id].count;
+                const deltaData = data.IDs[can_id].time_delta || "N/A"; // Ensure time_delta exists
+                const bytesData = JSON.stringify(data.IDs[can_id].data) || "N/A"; // Ensure data exists and convert to string
+
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = can_id;
+                row.insertCell(1).textContent = countData;
+                row.insertCell(2).textContent = deltaData;
+                row.insertCell(3).textContent = bytesData;
+            });
+        };
+    });
+</script>
+{% endblock %}

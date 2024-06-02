@@ -22,7 +22,7 @@ body {
 header, footer {
     color: white;
     text-align: center;
-    padding: 10px 0;
+    padding: 10px;
     display: flex;
     justify-content: space-between;
     font-size: 60px;
@@ -33,19 +33,16 @@ header {
     grid-template-columns: 1fr 1fr 1fr;
     background-color: rgb(11, 69, 11);
 }
-.center-header {
+/* .center-header {
     justify-content: center;
-}
+} */
 
 footer {
     display: grid;
     grid-template-columns: auto 1fr auto;
-    color: white;
-    padding: 10px;
-    text-align: center;
     background-color: blue;
 }
-.left-footer {
+/* .left-footer {
     justify-content: flex-start;
 }
 .center-footer {
@@ -53,12 +50,12 @@ footer {
 }
 .right-footer {
     justify-content: flex-end;
-}
+} */
 
 .nested-j1939-grid{
     flex: 1;
     display: grid;
-    grid-template-columns: auto minmax(200px, 1fr) auto;
+    grid-template-columns: auto minmax(200px, 1fr) auto auto;
     grid-auto-rows: 1fr;
 }
 .nested-ballast-grid{
@@ -93,6 +90,16 @@ select {
     font-size: 60pt;
     text-align: center;
 }
+option {
+    text-align: center;
+}
+/* button {
+    margin: 5px;
+    padding: 10px 20px;
+    font-size: 48pt;
+    cursor: pointer;
+    display: flex;
+} */
 
 .tank-container {
     width: 100%;

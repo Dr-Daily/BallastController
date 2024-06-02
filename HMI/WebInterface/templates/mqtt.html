@@ -1,0 +1,64 @@
+<!-- templates/j1939_display.html -->
+{% extends 'base.html' %}
+
+{% block title %}MQTT Example{% endblock %}
+
+{% block content %}
+<script src="{{ url_for('static', filename='js/mqtt.min.js') }}"></script>
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", () => {
+        // Connect to the local MQTT broker
+        const client = mqtt.connect('ws://192.168.1.136:8080');
+
+        // Set the topic you want to subscribe to
+        const topic = 'sensor/data';
+
+        // Called when the client connects
+        client.on('connect', () => {
+            console.log('Connected to MQTT broker');
+            client.subscribe(topic, (err) => {
+                if (!err) {
+                    console.log(`Subscribed to topic: ${topic}`);
+                }
+            });
+        });
+
+        // Called when a message arrives
+        client.on('message', (topic, message) => {
+                // message is a Buffer, convert it to string
+                const data = message.toString();
+                
+                console.log(`Received message: ${data}`);
+                const sensorData = JSON.parse(data);
+                // Display the temperature and humidity data in the HTML
+                document.getElementById('temperature').innerText = `Temperature: ${sensorData.temperature} °C`;
+                document.getElementById('humidity').innerText = `Humidity: ${sensorData.humidity} %`;
+            });
+
+
+        // Called when the client disconnects
+        client.on('close', () => {
+            console.log('Disconnected from MQTT broker');
+        });
+    });
+</script>
+<style>
+
+</style>
+
+<div class="grid-cell" style="align-items: top;" id="can-commands">
+   MQTT
+
+</div>
+<div class="grid-cell" id="j1939-data">
+    <h1>MQTT Sensor Data</h1>
+    <div id="temperature">Waiting for temperature data...</div>
+    <div id="humidity">Waiting for humidity data...</div>
+</div>
+<div class="grid-cell" id="j1939-graphs">
+    item 3
+</div>
+
+
+
+{% endblock %}

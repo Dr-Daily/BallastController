@@ -1,16 +1,15 @@
-<footer>
-    <div class="footer-section left-footer">
-        <span id="time"></span>
-    </div>
-    <div class="footer-section center-footer">
-        CAN&nbsp;<span id="CANstate">state</span>&nbsp;(<span id="CANbitrate">bitrate</span>)&nbsp;RX:<span id="CANRXbytes">bitrate</span>
-    </div>
-    <div class="footer-section right-footer">
-        <span id="ip"></span>
-    </div>
-</footer>
 <script>
-    $(document).ready(function() {
+    async function fetchIP() {
+        try {
+            const response = await fetch('/api/ip');
+            const data = await response.json();
+            document.getElementById('ip_button').innerText = data.ip;
+        } catch (error) {
+            document.getElementById('ip_button').innerText = 'IP not available';
+        }
+    }
+        
+    document.addEventListener('DOMContentLoaded', function(){
         function updateTime() {
             const now = new Date();
             const timeString = now.toLocaleTimeString();
@@ -19,15 +18,6 @@
             document.getElementById('time').innerText = `${dateString} ${timeString}`;
         }
 
-        async function fetchIP() {
-            try {
-                const response = await fetch('/api/ip');
-                const data = await response.json();
-                document.getElementById('ip').innerText = data.ip;
-            } catch (error) {
-                document.getElementById('ip').innerText = 'IP not available';
-            }
-        }
         
         async function updateCANStatus(message){
             try {
@@ -47,9 +37,40 @@
         setInterval(updateTime, 1000);
             
         fetchIP();
-        setInterval(fetchIP, 3001);
+        // setInterval(fetchIP, 3001);
 
         updateCANStatus(" Finished Loading")
-        setInterval(updateCANStatus, 1023);
+        setInterval(updateCANStatus, 2023);
     });
 </script>
+<style>
+    #footer-button-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    }
+    .footer-button {
+        background-color: inherit;
+        color: inherit;
+        border: 0px;
+        font-size: 50px;
+        cursor: pointer;
+        margin: 1; /* Remove margin from the refresh button */
+        width: 100%;
+    }
+    .footer-button:hover {
+        background-color: darkgray;
+        color: lightgreen;
+    }
+</style>
+<footer>
+    <div>
+        <span id="time"></span>
+    </div>
+    <div>
+        CAN&nbsp;<span id="CANstate">state</span>&nbsp;(<span id="CANbitrate">bitrate</span>)&nbsp;RX:<span id="CANRXbytes">bitrate</span>
+    </div>
+    <div>
+        <button class="footer-button" id="ip_button" onclick="fetchIP()"></button>
+    </div>
+</footer>

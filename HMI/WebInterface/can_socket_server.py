@@ -1,9 +1,15 @@
-import asyncio
-import websockets
-import struct
+# sudo systemctl restart can-websocket-server.service
 import time
+import paho.mqtt.client as mqtt
 import json
 import socket
+import struct
+
+MQTT_BROKER = "localhost"
+MQTT_PORT = 1883
+MQTT_TOPIC = "j1939/stats"
+
+UPDATE_PERIOD = .75 #second
 
 # To match this data structure, the following struct format can be used:
 can_frame_format = "<lB3x8s"
@@ -17,6 +23,29 @@ PS_MASK       = 0x0000FF00
 SA_MASK       = 0x000000FF
 PDU1_PGN_MASK = 0x03FF0000
 PDU2_PGN_MASK = 0x03FFFF00
+def get_j1939_from_id(can_id):
+    #priority
+    priority = (PRIORITY_MASK & can_id) >> 26
+
+    # Protocol Data Unit (PDU) Format
+    PF = (can_id & PF_MASK) >> 16
+        
+    # Determine the Parameter Group Number and Destination Address
+    if PF >= 0xF0: #240
+        # PDU 2 format, include the PS as a group extension
+        DA = 255
+        PGN = (can_id & PDU2_PGN_MASK) >> 8
+    else:
+        PGN = (can_id & PDU1_PGN_MASK) >> 8
+        DA = (can_id & PS_MASK) >> 8
+    # Source address
+    SA = (can_id & SA_MASK)   
+    return priority,PGN,DA,SA
+
+j1939_SA={0:{'name':"Engine #1"},
+          3:{'name':"Transmission"},
+          15:{'name':"Retarder"}
+          }
 
 #Make a CAN reading function
 def unpack_CAN(can_packet,display=False):
@@ -33,39 +62,7 @@ def unpack_CAN(can_packet,display=False):
         print("{} {} [{}] {}".format(interface, can_id_string, can_dlc, hex_data_string))
     return can_id, can_dlc, can_data
 
-
-
-def get_j1939_from_id(can_id):
-    #priority
-    priority = (PRIORITY_MASK & can_id) >> 26
-
-    #Extended Data Page
-    # edp = (EDP_MASK & can_id) >> 25
-    
-    # Data Page
-    # dp = (DP_MASK & can_id) >> 24
-    
-    # Protocol Data Unit (PDU) Format
-    PF = (can_id & PF_MASK) >> 16
-    
-    # Protocol Data Unit (PDU) Specific
-    #PS = (can_id & PS_MASK) >> 8
-    
-    # Determine the Parameter Group Number and Destination Address
-    if PF >= 0xF0: #240
-        # PDU 2 format, include the PS as a group extension
-        DA = 255
-        PGN = (can_id & PDU2_PGN_MASK) >> 8
-
-    else:
-        PGN = (can_id & PDU1_PGN_MASK) >> 8
-        DA = (can_id & PS_MASK) >> 8
-    # Source address
-    SA = (can_id & SA_MASK)
-    
-    return priority,PGN,DA,SA
-
-async def stream_data(websocket, path):
+def publish_stats(client):
     #Setup some defaults
     volts = "N/A"
     rpm = "N/A"
@@ -89,6 +86,7 @@ async def stream_data(websocket, path):
     
     data = {"IDs":{},"Source":{}}
     start_time = time.time()
+  
     while True:
         # Read the message from the newtork
         can_packet = sock.recv(16)
@@ -97,17 +95,6 @@ async def stream_data(websocket, path):
         #Parse the bytes into a CAN message
         can_id, can_dlc, can_data = unpack_CAN(can_packet)
         
-        can_id_key = "{:08X}".format(can_id)
-        if can_id_key in data["IDs"]:
-            data["IDs"][can_id_key]['count']+=1
-            data["IDs"][can_id_key]['time_delta']= "{:d}ms".format(int((can_time - data["IDs"][can_id_key]['time'])*1000))
-            data["IDs"][can_id_key]['time']=can_time      
-        else:
-            data["IDs"][can_id_key]={'count': 1}
-            data["IDs"][can_id_key]['time']= can_time
-            data["IDs"][can_id_key]['time_delta']= 0
-        
-        data["IDs"][can_id_key]['data'] = " ".join(["{:02X}".format(b) for b in can_data])
         #Parse the CAN ID into J1939
         priority,pgn,da,sa = get_j1939_from_id(can_id)
 
@@ -116,29 +103,53 @@ async def stream_data(websocket, path):
             data["Source"][sa]['count']+=1
         else:
             data["Source"][sa]={'count': 1}
+            data["Source"][sa]['address'] = sa
+            data["Source"][sa]['pgns']={}
+            try:
+                data["Source"][sa]['name'] = j1939_SA[sa]['name']
+            except KeyError:
+                data["Source"][sa]['name'] = "Unknown"
         
-        if pgn in data["Source"][sa]:
-            data["Source"][sa][pgn]['count']+=1
+        can_id_key = "{:08X}".format(can_id)
+        if pgn in data["Source"][sa]['pgns']:
+            data["Source"][sa]['pgns'][pgn]['count']+=1
+            data["Source"][sa]['pgns'][pgn]['time_delta']= "{:d}ms".format(
+                int((can_time - data["Source"][sa]['pgns'][pgn]['time'])*1000))
         else:
-            data["Source"][sa][pgn] = {'count': 1}
+            data["Source"][sa]['pgns'][pgn] = {'count': 1}
+            data["Source"][sa]['pgns'][pgn]['id']=can_id_key
+            data["Source"][sa]['pgns'][pgn]['time_delta']= 0
+            data["Source"][sa]['pgns'][pgn]['da']=da
         
-        data["Source"][sa][pgn]['data'] = " ".join(["{:02X}".format(b) for b in can_data])
+        data["Source"][sa]['pgns'][pgn]['data'] = " ".join(["{:02X}".format(b) for b in can_data])
+        data["Source"][sa]['pgns'][pgn]['time']= can_time
+            
 
-        if (time.time() - start_time) > 1:
-            await websocket.send(json.dumps(data))
+        if (time.time() - start_time) > UPDATE_PERIOD:
             start_time = time.time()
-        #await asyncio.sleep(1)  # Adjust the interval as needed
+            client.publish(MQTT_TOPIC, json.dumps(data))
 
-async def main():
-    async with websockets.serve(stream_data, "0.0.0.0", 8765):
-        await asyncio.Future()  # Run forever
 
 if __name__ == "__main__":
-    # Open a socket and bind to it from SocketCAN
-    sock = socket.socket(socket.PF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
-    interface = "can0"
 
-    # Bind to the interface
-    sock.bind((interface,))
-    asyncio.run(main())
+    # Connect to the broker.
+    # mosquitto should be running
+    client = mqtt.Client()
+    client.connect(MQTT_BROKER, MQTT_PORT, 60)
+    
+    # Setup a perpetual loop to catch issues with socketCAN.
+    # Other users can take down and bring up CAN, so the socket will fail and 
+    # we need to restart again.
+    while True:
+        try:
+            # Open a socket and bind to it from SocketCAN
+            sock = socket.socket(socket.PF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
+            interface = "can0"
+            # Bind to the interface
+            sock.bind((interface,))
+            publish_stats(client)
+        except Exception as e:
+            print(repr(e))
+            #Wait for the network to come back up.
+            time.sleep(.1)
 

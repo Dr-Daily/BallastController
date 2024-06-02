@@ -1,8 +1,9 @@
 #!/python
-from flask import Flask, jsonify,render_template, request
+from flask import Flask, jsonify,render_template, request, Response, stream_with_context
 import subprocess
 import humanize #sudo apt install python3-humanize
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit
 import psutil
 import socket
 
@@ -33,11 +34,15 @@ def ballast_control():
 
 @app.route('/j1939_display')
 def j1939_display():
-    return render_template('j1939_display.html')
+    return render_template('j1939_display.html', server_ip=get_ip_address())
 
 @app.route('/remote_rudder')
 def remote_rudder():
     return render_template('remote_rudder.html')
+
+@app.route('/mqtt')
+def mqtt():
+    return render_template('mqtt.html')
 
 
 ############################################
@@ -128,7 +133,17 @@ def set_bitrate():
     except ValueError:
         jsonify({"status": "error", "message": "Improper bitrate specified"}), 400
 
+@app.route('/stream')
+def stream():
+    def event_stream():
+        while True:
+            time.sleep(1)
+            yield f"data: The current time is {time.ctime()}\n\n"
+
+    return Response(stream_with_context(event_stream()), mimetype="text/event-stream")
+
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
 
 

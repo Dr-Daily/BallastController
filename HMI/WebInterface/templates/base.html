@@ -5,21 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Daily's Mastercraft Controller{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <!-- <div class="grid-container"> -->
-        <div class="header">
-            {% include 'header.html' %}
-        </div>
-        <div class="content">
-            {% block content %}
-            {% endblock %}
-        </div>
-        </div>
-        <div class="footer">
-            {% include 'footer.html' %}
-        </div>
-    <!-- </div> -->
+    <div class="header">
+        {% include 'header.html' %}
+    </div>
+    <div class="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+    </div>
+    <div >
+        {% include 'footer.html' %}
+    </div>
+
 </body>
 </html>

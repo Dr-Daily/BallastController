@@ -4,35 +4,7 @@
 {% block title %}Ballast Controller{% endblock %}
 
 {% block content %}
-<script>
-        function setBitrate(event) {
-            event.preventDefault(); // Prevent the form from submitting normally
-            var bitrate = document.getElementById("bitrate-select").value;
-            if (bitrate) {
-                fetch('/api/start_can', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        'bitrate': bitrate
-                    })
-                })
-                .then(response => response.json())
-                
-                .then(data => {
-                    if (data.status === "success") {
-                        alert("Bitrate set successfully!");
-                    } else {
-                        alert("Error: " + data.message);
-                    }
-                })
-                .catch(error => alert("An error occurred: " + error));
-            } else {
-                alert("Please select a bitrate.");
-            }
-        }
-</script>
+
 <style>
     .sa-button{
         font-size: inherit;
@@ -41,9 +13,15 @@
         width: 100%;
         text-align: left;
     }
+    .sa-button.active {
+            background-color: #4CAF50; /* Green background for the active button */
+            color: white; /* White text for the active button */
+        }
     .sa-container{
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        grid-template-columns: 1fr;
         justify-content: left; 
-        
         text-align: left;
     }
     .pgn-button{
@@ -53,186 +31,376 @@
         color: white;
         width: 100%;
     }
-    .pgn-container{
-        justify-content: left; 
-        
+    .pgn-button.active {
+            background-color: #f004d5; /* Green background for the active button */
+            color: white; /* White text for the active button */
+        }
+    .pgn-title-container{
+        text-align: center;
+        text-decoration: bold;
+    }
+    .pgn-header-container{
         text-align: left;
+        text-decoration: underline;
+    }
+    .pgn-container{
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        grid-template-columns: 1fr;
+        justify-content: left; 
+        text-align: left;
+    }
+    .database-table-option {
+        font-size: 36pt;
+        background-color: rgb(153, 213, 211);
+        text-align: left;
+        width: 100%;
+    }
+    .database-table-button {
+        font-size: 36pt;
+        background-color: rgb(213, 203, 153);
+        text-align: center;
+        width: 100%;
+    }
+    .can-control-button{
+        font-size: 36pt;
+        background-color: salmon;
+        text-align: center;
+        width: 100%;
     }
 
 </style>
 
-<div class="grid-cell" style="align-items: top;" id="can-commands">
-    <form  id="bitrate-form" method="POST">
-        <!-- <label for="bitrate-select">CAN bitrate:</label> -->
-        <select id="bitrate-select"  name="bitrate" onchange="setBitrate(event)">
-            <option value="" selected disabled>Bus Speed</option>
-            <option value="125000">125k</option>
-            <option value="250000">250k</option>
-            <option value="500000">500k</option>
-            <option value="666666">666k</option>
-            <option value="1000000">1M</option>
-        </select>
-    </form>
-    <!-- <button class=control-button type="submit">Start CAN</button> -->
-    <div class= sa-container id="source-addresses">
-    <h4>Sources</h4>
-        SA: Name (count)
-        <div class="sa-container" id="buttons-container">
-            <!-- Buttons will be dynamically inserted here -->
-        </div>
-        
+<div class="sa-container">
+    <div class="sa-button-container">
+        <form  id="bitrate-form" method="POST">
+            <select id="bitrate-select"  name="bitrate" onchange="setBitrate(event)">
+                <option value="250000" id="start-can-option" selected>Start CAN</option>
+                <option value="125000">Start (125k)</option>
+                <option value="250000" >Start (250k)</option>
+                <option value="500000">Start (500k)</option>
+                <option value="666666">Start (666k)</option>
+                <option value="1000000">Start (1M)</option>
+            </select>
+            <button class="can-control-button" type="button" id='can-control-button' onclick="stopCAN()">Stop CAN</button>
+            
+        </form>
     </div>
-
+    <div class="sa-title-container">
+        <!-- <form id="data-table-form" method="GET">
+            <label for="data-table-select">Sources:</label>   
+            <select class="database-table-option" id="data-table-select"  name="data-table" onchange="selectTable(event)">
+                <option value="" selected disabled>Getting Data Tables...</option>
+                
+            </select>
+            <button class="database-table-button" type="button" onclick="downloadTable()">Download</button>
+            <button class="database-table-button" type="button" onclick="renameTable()">Rename</button>
+            <button class="database-table-button" type="button" onclick="deleteTable()">Delete</button>
+            
+            
+        </form> -->
+        SA: Name (count)
+    </div>
+    <div class="sa-button-container" id="sa-buttons-container">
+        <!-- Buttons will be dynamically inserted here -->
+    </div>
+    <div class="downloads-container" id="downloads-container">
+        <!-- download links will be dynamically inserted here -->
+    </div>
 </div>
-<div class="pgn-container" id="pgn-container">
+<div>
+    <div class="pgn-title-container" id="pgn-title-container">
+        Source Address Title
+        <!-- Data will be dynamically displayed here -->
+    </div>
+    <div class="pgn-header-container">
+        PGN (CAN ID) period [count]
+    </div>
+    <div class="pgn-container" id="pgn-container">
+        Buttons of PGNs with Labels
+        <!-- Data will be dynamically displayed here -->
+    </div>
+</div>
+<div class="can-data-container" id="can-data-container">
     <!-- Data will be dynamically displayed here -->
 </div>
-<div class="grid-cell" id="data-container">
+<!-- <div class="grid-cell" id="j1939-graphs"> -->
     <!-- Data will be dynamically displayed here -->
-</div>
-<div class="grid-cell" id="j1939-graphs">
-    <!-- Data will be dynamically displayed here -->
-</div>
+<!-- </div> -->
 
 <script src="{{ url_for('static', filename='js/mqtt.min.js') }}"></script>
 <script type="text/javascript">
-    document.addEventListener("DOMContentLoaded", () => {
-        // Connect to the local MQTT broker
-        const serverIp = "{{ server_ip }}";
-        const brokerUrl = `ws://${serverIp}:8080`;
-        // Connect to the MQTT broker on the server
-        const client = mqtt.connect(brokerUrl);
-        
-        // Set the topic you want to subscribe to
-        const topic = 'j1939/stats';
+document.addEventListener("DOMContentLoaded", () => {
+    // Connect to the local MQTT broker
+    const serverIp = "{{ server_ip }}";
+    const brokerUrl = `ws://${serverIp}:8080`;
+    // Connect to the MQTT broker on the server
+    const client = mqtt.connect(brokerUrl);
+    
+    // Set the topic you want to subscribe to
+    const topics = ['j1939/stats','data/sizes'];
 
-        // Called when the client connects
-        client.on('connect', () => {
-            console.log('Connected to MQTT broker');
-            client.subscribe(topic, (err) => {
-                if (!err) {
-                    console.log(`Subscribed to topic: ${topic}`);
-                }
-            });
-        });
-
-        // Called when a message arrives
-        client.on('message', (topic, message) => {
-            // message is a Buffer, convert it to string
-            const data = message.toString();
-            
-            // console.log(`Received message: ${data}`);
-            const CANData = JSON.parse(data);
-            
-            const buttonsContainer = document.getElementById('buttons-container');
-            buttonsContainer.innerHTML = ''; // Clear previous buttons
-
-            for (const sa in CANData.Source) {
-                if (data.hasOwnProperty(sa)) {
-                    const item = CANData.Source[sa];
-                    const button = document.createElement('button');
-                    button.textContent = sa + ": " + item.name + " (" + item.count + ")";
-                    button.setAttribute('data-key', sa);
-                    button.setAttribute('class','sa-button')
-                    button.addEventListener('click', function() {
-                        displayPGN(item);
-                    });
-                    button.addEventListener('hover', function() {
-                        displayPGN(item);
-                    });
-                    // Append the button to the buttons container
-                    buttonsContainer.appendChild(button);
-                    // Add a <br> tag after each button
-                    buttonsContainer.appendChild(document.createElement('br'));
-                }
+    // Called when the client connects
+    client.on('connect', () => {
+        console.log('Connected to MQTT broker');
+        client.subscribe(topics, (err) => {
+            if (!err) {
+                console.log('Subscribed to topics:', topics);
             }
-        });
-
-
-        // Called when the client disconnects
-        client.on('close', () => {
-            console.log('Disconnected from MQTT broker');
         });
     });
 
-    function displayPGN(item) {
-        console.log(item);
-        const dataContainer = document.getElementById('pgn-container');
-        dataContainer.innerHTML = ''; // Clear previous data
+    let lastClickedSAButton = null;
+    let lastActiveSAButton = null;
 
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'name';
-        nameDiv.textContent = "Source Address " + item.address + ":" + item.name;
+    // Called when a message arrives
+    // These must be running.
+    // sudo systemctl restart flask-app.service
+    // sudo systemctl restart mosquitto.service
+    // sudo systemctl restart can-websocket-server.service
 
-        const pgnDiv = document.createElement('div');
-        pgnDiv.className = 'pgns';
-        const header_txt = document.createElement('span');
-        header_txt.textContent = "PGN (CAN ID) period [count]"
-        pgnDiv.appendChild(header_txt)
-        for (const pgn in item.pgns) {
-                if (item.pgns.hasOwnProperty(pgn)) {
-                    const values = item.pgns[pgn];
-                    const button = document.createElement('button');
-                    button.textContent = pgn + " (" + values.id + ") " + values.time_delta + " [" + values.count + "]";
-                    button.setAttribute('data-key', pgn);
-                    button.setAttribute('class','pgn-button')
-                    button.addEventListener('click', function() {
-                        displayData(values);
-                    });
-                    // Append the button to the buttons container
-                    pgnDiv.appendChild(button);
-                    pgnDiv.appendChild(document.createElement('br'));
+    client.on('message', function(topic, message) {
+        const top = topic.toString();
+        // message is a Buffer, convert it to string
+        const data = message.toString();
+        // console.log(`Received topic ${top} with message: ${data}`);
+        if (top === 'data/sizes'){
+            const sizeData = JSON.parse(data);
+            console.log(`Received topic ${top} with message: ${data}`);
+            fetchTables(sizeData)
+        }
+        else
+        {
+            
+        // console.log(`Received message: ${data}`);
+        const CANData = JSON.parse(data);
+        
+        const buttonsContainer = document.getElementById('sa-buttons-container');
+        buttonsContainer.innerHTML = ''; // Clear previous buttons
+
+        for (const sa in CANData.Source) {
+            if (CANData.Source.hasOwnProperty(sa)) {
+                const item = CANData.Source[sa];
+                const button = document.createElement('button');
+                button.textContent = sa + ": " + item.name + " (" + item.count + ")";
+                button.setAttribute('data-key', sa);
+                button.setAttribute('class','sa-button')
+                button.addEventListener('click', function() {
+                    // Latch the last clicked button
+                    if (lastClickedSAButton) {
+                        lastClickedSAButton.classList.remove('active');
+                    }
+                    button.classList.add('active');
+                    lastActiveSAButton = button;
+                    lastClickedSAButton = button;
+                    displayPGN(item);
+                });
+                // Append the button to the buttons container
+                buttonsContainer.appendChild(button);
+                // Add a <br> tag after each button
+                buttonsContainer.appendChild(document.createElement('br'));
+                
+                // Add if there are no active buttons, then add this one.
+                if (lastActiveSAButton === null){
+                    lastActiveSAButton = button
+                }
+
+
+                // If this is the last clicked button, ensure it remains active and display its data
+                if (lastClickedSAButton && lastClickedSAButton.getAttribute('data-key') === sa) {
+                    button.classList.add('active');
+                    lastActiveSAButton = button;
+                    displayPGN(item);
                 }
             }
-        
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'item';
-        itemDiv.appendChild(nameDiv);
-        itemDiv.appendChild(pgnDiv);
-
-        // Append the item div to the data container
-        dataContainer.appendChild(itemDiv);
+        }
     }
+    });
 
-    function displayData(item) {
-        console.log(item);
-        const dataContainer = document.getElementById('data-container');
-        // dataContainer.innerHTML = 'PGN (CAN ID) period [count]'; // Clear previous data
 
-        // const nameDiv = document.createElement('div');
-        // nameDiv.className = 'name';
-        // nameDiv.textContent = "Source Address " + item.address + "<br>" + item.name;
+    // Called when the client disconnects
+    client.on('close', () => {
+        console.log('Disconnected from MQTT broker');
+    });
 
-        // const pgnDiv = document.createElement('div');
-        // pgnDiv.className = 'pgns';
-        // for (const pgn in item.pgns) {
-        //         if (item.hasOwnProperty(pgn)) {
-        //             const values = item.pgns[pgn];
-        //             const button = document.createElement('button');
-        //             button.textContent = pgn + " (" + values.id + ") " + values.time_delta + " [" + values.count + "]";
-        //             button.setAttribute('data-key', pgn);
-        //             button.setAttribute('class','pgn-button')
-        //             button.addEventListener('click', function() {
-        //                 downloadData(item);
-        //             });
-        //             // Append the button to the buttons container
-        //             buttonsContainer.appendChild(button);
-        //         }
-        //     }
-        // pgnDiv.textContent = item.count;
-        // pgnDiv.appendChild(pgnDiv);
+    //initialize the menu.
+    fetchTables({})
+    const live = document.getElementById('data-table-live');
+    live.setAttribute('selected','selected')
+});
 
-        // const itemDiv = document.createElement('div');
-        // itemDiv.className = 'item';
-        // itemDiv.appendChild(nameDiv);
-        // itemDiv.appendChild(pgnDiv);
+function fetchTables(tables) {
+    const downloadsContainer = document.getElementById('downloads-container');
+    downloadsContainer.innerHTML = ''; // Clear existing links
 
-        // // Append the item div to the data container
-        // dataContainer.appendChild(itemDiv);
+    // Use Object.entries() to get key-value pairs and iterate over them
+    for (const [key, value] of Object.entries(tables)) {
+        const link = document.createElement('a');
+        link.href = `/api/download?table_name=${key}`; // Assuming your download endpoint uses this query parameter
+        link.textContent = `${key} (${value})`;
+        // link.download = key; // This attribute suggests the browser to download the resource
+        downloadsContainer.appendChild(link);
+        const linebreak = document.createElement('br');
+        downloadsContainer.appendChild(linebreak);   
     }
-    function downloadData(){
-        
+}
+function setBitrate(event) {
+    event.preventDefault(); // Prevent the form from submitting normally
+    var bitrate = document.getElementById("bitrate-select").value;
+    if (bitrate) {
+        fetch('/api/start_can', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                'bitrate': bitrate
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data);
+            if (data.status === "success") {
+                // alert("Bitrate set successfully!");
+                const stopButton = document.getElementById('can-control-button')
+                stopButton.removeAttribute('disabled'); // Use removeAttribute for enabling the button
+            } else {
+                const errorMessage = typeof data.message === 'string' ? data.message : JSON.stringify(data.message);
+                alert("Error: " + errorMessage);
+            }
+        })
+        .catch(error => alert("An error occurred: " + error));
+    } else {
+        alert("Please select a bitrate.");
     }
+}
+document.addEventListener("DOMContentLoaded", () => {
+    const bitrateSelect = document.getElementById("bitrate-select");
+    bitrateSelect.addEventListener("change", setBitrate);
+});
+
+
+
+function selectTable(event) {
+
+}
+function displayMessages(messages) {
+    const container = document.getElementById('can-data-container');
+    container.innerHTML = ''; // Clear previous data
+
+    messages.forEach(message => {
+        const div = document.createElement('div');
+        div.textContent = JSON.stringify(message);
+        container.appendChild(div);
+    });
+}
+
+function renameTable(){
+    
+}
+function deleteTable(tableName) {
+    const confirmed = confirm(`Do you want to delete ${tableName}?`);
+
+    if (confirmed && tableName) {
+        fetch(`/api/delete_table?table_name=${tableName}`, {
+            method: 'GET',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert("Error: " + data.error);
+            } else {
+                alert(data.message);
+                fetchTables(); // Refresh the table list
+            }
+        })
+        .catch(error => alert("An error occurred: " + error));
+    } 
+}
+
+let lastClickedPGNButton = null; 
+function displayPGN(item) {
+    // console.log(item);
+    const dataContainer = document.getElementById('pgn-container');
+    dataContainer.innerHTML = ''; // Clear previous data
+
+    const nameDiv = document.getElementById("pgn-title-container");
+    nameDiv.textContent = "Source Address " + item.address + ": " + item.name;
+
+    const pgnDiv = document.createElement('div');
+    pgnDiv.className = 'pgns';
+    const header_txt = document.createElement('span');
+    header_txt.textContent = ""
+    pgnDiv.appendChild(header_txt)
+    for (const pgn in item.pgns) {
+            if (item.pgns.hasOwnProperty(pgn)) {
+                const values = item.pgns[pgn];
+                const button = document.createElement('button');
+                button.textContent = pgn + " (" + values.id + ") " + values.time_delta + " [" + values.count + "]";
+                button.setAttribute('data-key', pgn);
+                button.setAttribute('class','pgn-button')
+                button.addEventListener('click', function() {
+                    // Latch the last clicked button
+                    if (lastClickedPGNButton) {
+                        lastClickedPGNButton.classList.remove('active');
+                    }
+                    button.classList.add('active');
+                    lastClickedPGNButton = button;
+                    displayData(values);
+                });
+                // Append the button to the buttons container
+                pgnDiv.appendChild(button);
+                pgnDiv.appendChild(document.createElement('br'));
+                // If this is the last clicked button, ensure it remains active and display its data
+                if (lastClickedPGNButton && lastClickedPGNButton.getAttribute('data-key') === pgn) {
+                    button.classList.add('active');
+                    displayData(values);
+                }
+            }
+        }
+    // Append the item div to the data container
+    dataContainer.appendChild(pgnDiv);
+}
+
+function displayData(item) {
+    // console.log(item);
+    const dataContainer = document.getElementById('can-data-container');
+    dataContainer.innerHTML = 'CAN Data'; // Clear previous data
+
+    const dataDiv = document.createElement('div');
+    dataDiv.className = 'canData';
+    dataDiv.textContent = item.data;
+
+    // // Append the item div to the data container
+    dataContainer.appendChild(dataDiv);
+}
+async function stopCAN() {
+    try {
+        const response = await fetch('/api/stop_can', {
+            method: 'GET',
+        });
+
+        if (response.ok) {
+            const stopButton = document.getElementById('can-control-button');
+            stopButton.removeAttribute('disabled'); // Use removeAttribute for enabling the button
+            
+            // Select the "Start CAN" option
+            const startCanOption = document.getElementById('start-can-option');
+            startCanOption.selected = true;
+        } else {
+            console.error('Failed to stop CAN:', response.statusText);
+            alert('Failed to stop CAN');
+        }
+    } catch (error) {
+        console.error('Error occurred while stopping CAN:', error);
+        alert('An error occurred while stopping CAN');
+    }
+}
 </script>
 
 {% endblock %}

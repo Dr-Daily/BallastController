@@ -55,7 +55,7 @@ footer {
 .nested-j1939-grid{
     flex: 1;
     display: grid;
-    grid-template-columns: auto minmax(200px, 1fr) auto auto;
+    grid-template-columns: repeat(3, 1fr) ;
     grid-auto-rows: 1fr;
 }
 .nested-ballast-grid{
@@ -89,10 +89,9 @@ footer {
 select {
     font-size: 60pt;
     text-align: center;
+    width: 100%
 }
-option {
-    text-align: center;
-}
+
 /* button {
     margin: 5px;
     padding: 10px 20px;

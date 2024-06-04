@@ -42,9 +42,9 @@ CAN_message_t msg;
 
 
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT); digitalWrite(LED_BUILTIN, HIGH); 
   pinMode(6, OUTPUT); digitalWrite(6, LOW); /* optional tranceiver enable pin */
 
+  pinMode(LED_BUILTIN, OUTPUT); digitalWrite(LED_BUILTIN, LED_state); 
   pinMode(RED, OUTPUT); digitalWrite(RED, RED_state); 
   pinMode(GREEN, OUTPUT); digitalWrite(GREEN, GREEN_state); 
   pinMode(port_pin, INPUT_PULLUP);
@@ -70,6 +70,7 @@ void setup() {
   msg.id = CAN_ID;
   msg.len = 8;
   msg.flags.extended = true;
+  delay(1000);
 }
 
 void canSniff(const CAN_message_t &msg) {
@@ -87,7 +88,7 @@ void loop() {
   
   digitalWrite(RED, port_value); 
   digitalWrite(GREEN, starboard_value); 
-  digitalWrite(LED_BUILTIN, LED_state);
+  digitalWrite(LED_BUILTIN, center_value);
   
   
   Can1.events();

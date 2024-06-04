@@ -30,7 +30,7 @@ header, footer {
 }
 header {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr auto;
     background-color: rgb(11, 69, 11);
 }
 /* .center-header {
@@ -162,4 +162,14 @@ select {
     transform: translateY(50%);
     font-size: 72pt;
     color: white;
+}
+
+.water-sensor-container {
+    width: 100%;
+    color: black;
+}
+.water-sensor-container span {
+    font-weight: bold;
+    font-family: Tahoma, sans-serif;
+
 }

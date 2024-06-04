@@ -29,4 +29,27 @@
     <div>
         <button class="header-button" onclick="location.href='{{ url_for("remote_rudder") }}';">Remote Rudder</button>
     </div>
+    <div>
+        <button class="header-button" onclick=systemShutdown()>Shutdown</button>
+    </div>
 </header>
+<script>
+    function systemShutdown() {
+        if (confirm("Are you sure you want to shut down the system?")) {
+            fetch('/api/shutdown', {
+                method: 'GET'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('System is shutting down');
+                } else {
+                    alert('Error: ' + data.output);
+                }
+            })
+            .catch(error => {
+                alert('Request failed: ' + error);
+            });
+        }
+    }
+</script>

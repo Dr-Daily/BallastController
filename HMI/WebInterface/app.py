@@ -212,7 +212,6 @@ def get_can_stats():
             tx_line = stat_lines[line+1].strip().split()
             for k,v in zip(tx_header,tx_line):
                 stats['CANTX'+k] = v
-    
     return stats
 
 @app.route('/api/can_stats', methods=['GET'])
@@ -229,7 +228,7 @@ def start_can(bitrate):
     stop_can()
     
     try:
-        command = f"sudo ip link set can0 up type can bitrate {bitrate}"
+        command = f"sudo ip link set can0 up type can bitrate {bitrate} restart-ms 100"
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             return {"status": "error", "output": result.stderr}
@@ -249,7 +248,7 @@ def set_bitrate():
     except ValueError:
         jsonify({"status": "error", "message": "Improper bitrate specified"}), 400
 
-@app.route('/api/stop_can', methods=['get'])
+@app.route('/api/stop_can', methods=['GET'])
 def stop_can():
     try:
         command = "sudo ip link set can0 down"
@@ -260,6 +259,19 @@ def stop_can():
             return jsonify({"status": "success", "message": f"Executed Command: {command}"})
     except subprocess.CalledProcessError:
         return jsonify({"status": "error", "output": result.stderr})
+
+@app.route('/api/shutdown', methods=['GET'])
+def system_shutdown():
+    try:
+        command = "sudo shutdown -h now"
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        if result.returncode !=0:
+            return jsonify({"status": "error", "output": result.stderr})
+        else:
+            return jsonify({"status": "success", "output":result.stdout, "message": f"Executed Command: {command}"})
+    except Exception as e:
+        return jsonify({"status": "error", "output": str(e)})
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

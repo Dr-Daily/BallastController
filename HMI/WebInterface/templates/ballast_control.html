@@ -5,38 +5,38 @@
 
 {% block content %}
 <div class="nested-ballast-grid" id="ballast-grid">
-    <div class="grid-cell" id="port-fill-container" >
+    <div class="grid-cell" id="port-fill-container">
         <button class="control-button" onclick="alert('Fill Port')">
             <table padding="0" justify="center">
                 <tr>
                     <td><img src="{{ url_for('static', filename='images/filling.png') }}" alt="Filling Icon" height="150pt"></td>
                     <td>Port Fill</td>
                 </tr>
-            </table> 
+            </table>
         </button>
     </div>
-    <div class="grid-cell" id="center-fill-container" >
+    <div class="grid-cell" id="center-fill-container">
         <button class="control-button" style="background-color: lightgreen;" onclick="alert('Fill Center')">
             <table padding="0" justify="center">
                 <tr>
                     <td><img src="{{ url_for('static', filename='images/filling.png') }}" alt="Filling Icon" height="150pt"></td>
                     <td>Center Fill</td>
                 </tr>
-            </table> 
+            </table>
         </button>
     </div>
-    <div class="grid-cell" id="starboard-fill-container" >
+    <div class="grid-cell" id="starboard-fill-container">
         <button class="control-button" onclick="alert('Fill Starboard')">
             <table padding="0" justify="center">
                 <tr>
                     <td><img src="{{ url_for('static', filename='images/filling.png') }}" alt="Filling Icon" height="150pt"></td>
                     <td>Starboard Fill</td>
                 </tr>
-            </table> 
+            </table>
         </button>
     </div>
     <div class="grid-cell">
-        <button div class="tank-container" onclick="alert('Stop Port')">
+        <button class="tank-container" onclick="alert('Stop Port')">
             <div id="portTankLevel" class="tank-level"></div>
             <div id="portTankGraphic" class="tank-graphic"><img src="{{ url_for('static', filename='images/PortTankonBoat3.png') }}" alt="portTank" height="100%"></div>
             <div class="tank-label">Port</div>
@@ -45,7 +45,7 @@
         </button>
     </div>
     <div class="grid-cell">
-        <button div class="tank-container" onclick="alert('Stop Center')">
+        <button class="tank-container" onclick="alert('Stop Center')">
             <div id="centerTankLevel" class="tank-level"></div>
             <div id="centerTankGraphic" class="tank-graphic"><img src="{{ url_for('static', filename='images/CenterTankOnBoat3.png') }}" alt="portTank" height="100%"></div>
             <div class="tank-label">Center</div>
@@ -54,7 +54,7 @@
         </button>
     </div>
     <div class="grid-cell">
-        <button div class="tank-container" onclick="alert('Stop Starboard')">
+        <button class="tank-container" onclick="alert('Stop Starboard')">
             <div id="starboardTankLevel" class="tank-level"></div>
             <div id="starboardTankGraphic" class="tank-graphic"><img src="{{ url_for('static', filename='images/StarboardTankOnBoat3.png') }}" alt="portTank" height="100%"></div>
             <div class="tank-label">Starboard</div>
@@ -63,96 +63,168 @@
         </button>
     </div>
     <div class="grid-cell" id="port-drain-container">
-        <button  id="port-drain-container" class="control-button" style="background-color: salmon;" onclick="alert('port Drain')">
+        <button class="control-button" style="background-color: salmon;" onclick="alert('Port Drain')">
             <table>
                 <tr>
                     <td><img src="{{ url_for('static', filename='images/emptying.png') }}" alt="Emptying Icon" height="150pt"></td>
                     <td>Port Drain</td>
                 </tr>
-            </table> 
+            </table>
         </button>
     </div>
-    <div class="grid-cell" id="center-drain-container" >
-        <button id="CenterDrainButton" class="control-button" style="background-color: salmon;" onclick="alert('Center Drain')">
+    <div class="grid-cell" id="center-drain-container">
+        <button class="control-button" style="background-color: salmon;" onclick="alert('Center Drain')">
             <table>
                 <tr>
-                    <td><img src="{{ url_for('static', filename='images/emptying.png') }}" alt="Empyting Icon" height="150pt"></td>
+                    <td><img src="{{ url_for('static', filename='images/emptying.png') }}" alt="Emptying Icon" height="150pt"></td>
                     <td>Center Drain</td>
                 </tr>
-            </table> 
+            </table>
         </button>
     </div>
-    <div class="grid-cell" id="starboard-drain-container" >
-        <button id="starboardDrainButton" class="control-button" style="background-color: salmon;" onclick="alert('Starboard Drain')">
+    <div class="grid-cell" id="starboard-drain-container">
+        <button class="control-button" style="background-color: salmon;" onclick="alert('Starboard Drain')">
             <table>
                 <tr>
                     <td><img src="{{ url_for('static', filename='images/emptying.png') }}" alt="Emptying Icon" height="150pt"></td>
                     <td>Starboard Drain</td>
                 </tr>
-            </table> 
+            </table>
         </button>
     </div>
     <div class="grid-cell">Port Timer</div>
     <div class="grid-cell">Center Timer</div>
     <div class="grid-cell">Starboard Timer</div>
-    <div class="grid-cell">Port Water Sensor</div>
-    <div class="grid-cell">Center Water Sensor</div>
-    <div class="grid-cell">Starboard Water Sensor</div>
+    <div class="grid-cell">
+        <div class = water-sensor-container  id="port-water-sensor-container">
+            Port Water Inlet<br><span id="port-water-sensor">Unknown</span>
+        </div>
+    </div>
+    <div class="grid-cell">
+        <div class = water-sensor-container id="center-water-sensor-container">
+            Center Water Inlet<br><span id="center-water-sensor">Unknown</span>
+        </div>
+    </div>
+    <div class="grid-cell">
+        <div class = water-sensor-container  id="starboard-water-sensor-container">
+            Starboard Water Inlet<br><span id="starboard-water-sensor">Unknown</span>
+        </div>
+    </div>
 </div>
 
-<script>
-    function updateTankLevel(level,tank) {
+<script src="{{ url_for('static', filename='js/mqtt.min.js') }}"></script>
+<script type="text/javascript">
+    function updateTankLevel(level, tank) {
         let tankLevelElement;
         let tankPercentageElement;
-        if (tank == "port"){
+        if (tank === 'port') {
             tankLevelElement = document.getElementById('portTankLevel');
             tankPercentageElement = document.getElementById('portTankPercentage');
-        }
-        else if (tank == 'center'){
+        } else if (tank === 'center') {
             tankLevelElement = document.getElementById('centerTankLevel');
             tankPercentageElement = document.getElementById('centerTankPercentage');
-        }
-        else if (tank == 'starboard'){
+        } else if (tank === 'starboard') {
             tankLevelElement = document.getElementById('starboardTankLevel');
             tankPercentageElement = document.getElementById('starboardTankPercentage');
-        }
-        else {
+        } else {
             return;
         }
 
         if (level < 0) level = 0;
         if (level > 100) level = 100;
-        
+
         tankLevelElement.style.height = `${level}%`;
         tankPercentageElement.textContent = `${level}%`;
     }
-    
-    function updateTankMessage(message,tank) {
+
+    function updateTankMessage(message, tank) {
         let tankMessageElement;
-        if (tank == "port"){
+        if (tank === 'port') {
             tankMessageElement = document.getElementById('portTankMessage');
-        }
-        else if (tank == 'center'){
+        } else if (tank === 'center') {
             tankMessageElement = document.getElementById('centerTankMessage');
-        }
-        else if (tank == 'starboard'){
+        } else if (tank === 'starboard') {
             tankMessageElement = document.getElementById('starboardTankMessage');
-        }
-        else {
+        } else {
             return;
         }
         tankMessageElement.innerHTML = `${message}`;
     }
 
-    
+    function updateWaterSensors(waterSensorData) {
+        const portSensor = document.getElementById('port-water-sensor-container');
+        const centerSensor = document.getElementById('center-water-sensor-container');
+        const starboardSensor = document.getElementById('starboard-water-sensor-container');
 
-    updateTankLevel(12,"port");
-    updateTankLevel(62,"center");
-    updateTankLevel(99,"starboard");
-    updateTankLevel(50,"");
-    
-    updateTankMessage("Off","port");
-    updateTankMessage('Filling...<br><span style="font-size: 36pt;">(Press to Stop)</span>',"center");
-    updateTankMessage('Draining...<br><span style="font-size: 36pt;">(Press to Stop)</span>',"starboard");
+        if (waterSensorData.port === true) {
+            portSensor.style.backgroundColor = 'aqua';
+            portSensor.querySelector('span').textContent = 'Full';
+        } else {
+            portSensor.style.backgroundColor = 'orange';
+            portSensor.querySelector('span').textContent = 'Empty';
+        }
+
+        if (waterSensorData.center === true) {
+            centerSensor.style.backgroundColor = 'aqua';
+            centerSensor.querySelector('span').textContent = 'Full';
+            
+        } else {
+            centerSensor.style.backgroundColor = 'orange';
+            centerSensor.querySelector('span').textContent = 'Empty';   
+        }
+
+        if (waterSensorData.starboard === true) {
+            starboardSensor.style.backgroundColor = 'aqua';
+            starboardSensor.querySelector('span').textContent = 'Full';
+        } else {
+            starboardSensor.style.backgroundColor = 'orange';
+            starboardSensor.querySelector('span').textContent = 'Empty';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Connect to the local MQTT broker
+        const serverIp = '{{ server_ip }}';
+        const brokerUrl = `ws://${serverIp}:8080`;
+        // Connect to the MQTT broker on the server
+        const client = mqtt.connect(brokerUrl);
+
+        // Set the topic you want to subscribe to
+        const topics = ['data/water_sensors'];
+
+        // Called when the client connects
+        client.on('connect', () => {
+            console.log('Connected to MQTT broker');
+            client.subscribe(topics, (err) => {
+                if (!err) {
+                    console.log('Subscribed to topics:', topics);
+                }
+            });
+        });
+
+        client.on('message', (topic, message) => {
+            const top = topic.toString();
+            // message is a Buffer, convert it to string
+            const data = message.toString();
+            console.log(`Received topic ${top} with message: ${data}`);
+            if (top === 'data/water_sensors') {
+                const waterSensorData = JSON.parse(data);
+                updateWaterSensors(waterSensorData);
+            }
+        });
+
+        // Called when the client disconnects
+        client.on('close', () => {
+            console.log('Disconnected from MQTT broker');
+        });
+
+        updateTankLevel(12, 'port');
+        updateTankLevel(62, 'center');
+        updateTankLevel(99, 'starboard');
+
+        updateTankMessage('Off', 'port');
+        updateTankMessage('Filling...<br><span style="font-size: 36pt;">(Press to Stop)</span>', 'center');
+        updateTankMessage('Draining...<br><span style="font-size: 36pt;">(Press to Stop)</span>', 'starboard');
+    });
 </script>
 {% endblock %}

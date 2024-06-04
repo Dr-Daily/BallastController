@@ -242,6 +242,8 @@ def publish_stats(client, cursor, table_name):
     water_sensor_start_time = start_time
     water_sensor_data = {}
     last_water_sensor_freshness = 0
+    loop_time = start_time
+    last_loop_time = 0
     while True:
         # Read the message from the newtork
         try:
@@ -257,7 +259,8 @@ def publish_stats(client, cursor, table_name):
         
         # get the system time as soon after the message is read
         can_time = time.time() #This is jittery and may not reflect actual bus time, but it's close.
-    
+        loop_time = int((can_time - last_loop_time)*1000000)
+        last_loop_time = can_time
         #Parse the bytes into a CAN message
         can_id, can_dlc, can_data, can_id_string = unpack_CAN(can_packet)
         can_data_string = " ".join(["{:02X}".format(b) for b in can_data])
@@ -275,46 +278,48 @@ def publish_stats(client, cursor, table_name):
                 water_sensor_data['port'] = bool(can_data[1])
                 water_sensor_data['starboard'] = bool(can_data[2])
             else:
-                water_sensor_data['center':None]
-                water_sensor_data['port':None]
-                water_sensor_data['starboard':None]
+                water_sensor_data['center'] = None
+                water_sensor_data['port'] = None
+                water_sensor_data['starboard'] = None
+            water_sensor_data['loop_time'] = loop_time
             last_water_sensor_freshness = freshness
-
-        #Make a summary of the CAN messages.
-        if sa in data["Source"]:
-            data["Source"][sa]['count']+=1
-        else:
-            data["Source"][sa]={'count': 1}
-            data["Source"][sa]['address'] = sa
-            data["Source"][sa]['pgns'] = {}
-            try:
-                data["Source"][sa]['name'] = j1939_SA[sa]['name']
-            except KeyError:
-                data["Source"][sa]['name'] = "Unknown"
+    
+        # #Make a summary of the CAN messages.
+        #Move this to the database
+        # if sa in data["Source"]:
+        #     data["Source"][sa]['count']+=1
+        # else:
+        #     data["Source"][sa]={'count': 1}
+        #     data["Source"][sa]['address'] = sa
+        #     data["Source"][sa]['pgns'] = {}
+        #     try:
+        #         data["Source"][sa]['name'] = j1939_SA[sa]['name']
+        #     except KeyError:
+        #         data["Source"][sa]['name'] = "Unknown"
         
-        if pgn in data["Source"][sa]['pgns']:
-            data["Source"][sa]['pgns'][pgn]['count']+=1
-            data["Source"][sa]['pgns'][pgn]['time_delta'] = "{:d}ms".format(
-                int((can_time - data["Source"][sa]['pgns'][pgn]['time'])*1000))
-        else:
-            data["Source"][sa]['pgns'][pgn] = {'count': 1}
-            data["Source"][sa]['pgns'][pgn]['id']=can_id_string
-            data["Source"][sa]['pgns'][pgn]['time_delta']= 0
-            data["Source"][sa]['pgns'][pgn]['da']=da
+        # if pgn in data["Source"][sa]['pgns']:
+        #     data["Source"][sa]['pgns'][pgn]['count']+=1
+        #     data["Source"][sa]['pgns'][pgn]['time_delta'] = "{:d}ms".format(
+        #         int((can_time - data["Source"][sa]['pgns'][pgn]['time'])*1000))
+        # else:
+        #     data["Source"][sa]['pgns'][pgn] = {'count': 1}
+        #     data["Source"][sa]['pgns'][pgn]['id']=can_id_string
+        #     data["Source"][sa]['pgns'][pgn]['time_delta']= 0
+        #     data["Source"][sa]['pgns'][pgn]['da']=da
         
-        data["Source"][sa]['pgns'][pgn]['data'] = can_data_string
-        data["Source"][sa]['pgns'][pgn]['time']= can_time
+        # data["Source"][sa]['pgns'][pgn]['data'] = can_data_string
+        # data["Source"][sa]['pgns'][pgn]['time'] = can_time
             
     
         table_sizes[table_name]+=1
-        if (can_time - water_sensor_start_time) > 0.73:
+        if (can_time - water_sensor_start_time) > .73:
             water_sensor_start_time = can_time
             client.publish(MQTT_WATER_SENSOR_TOPIC, json.dumps(water_sensor_data,sort_keys=True))
             logger.debug(f"Published to {MQTT_WATER_SENSOR_TOPIC}: {json.dumps(water_sensor_data,sort_keys=True)}")
 
-        if (can_time - start_time) > 1.51:
+        if (can_time - start_time) > .91:
             start_time = time.time()
-            client.publish(MQTT_TOPIC, json.dumps(data,sort_keys=True))
+            #client.publish(MQTT_TOPIC, json.dumps(data)) #the following command explodes when 
             try:
                 cursor.execute('BEGIN;')
                 # ITERATE through the list of stored CAN data
@@ -341,7 +346,8 @@ def publish_stats(client, cursor, table_name):
             size_start_time = time.time()
             client.publish(MQTT_SIZE_TOPIC, json.dumps(table_sizes,sort_keys=True))
             logger.debug(f"Published to {MQTT_SIZE_TOPIC}:\n {json.dumps(table_sizes,indent=2,sort_keys=True)}")
-            
+        
+
 if __name__ == "__main__":    
     # Setup a perpetual loop to catch issues with socketCAN.
     # Other users can take down and bring up CAN, so the socket will fail and 
@@ -393,13 +399,13 @@ if __name__ == "__main__":
 
         # Get table sizes
         table_sizes = {}
-        for table in tables:
-            cursor.execute(f"SELECT COUNT(*) FROM {table}")
-            row_count = cursor.fetchone()[0]   
-            table_sizes[table]=row_count
+        # for table in tables:
+        #     cursor.execute(f"SELECT COUNT(*) FROM {table}")
+        #     row_count = cursor.fetchone()[0]   
+        #     table_sizes[table]=row_count
 
-        client.publish(MQTT_SIZE_TOPIC, json.dumps(table_sizes))
-        logger.info(f"Published table sizes to {MQTT_SIZE_TOPIC}")
+        # client.publish(MQTT_SIZE_TOPIC, json.dumps(table_sizes))
+        # logger.info(f"Published table sizes to {MQTT_SIZE_TOPIC}")
 
         table_name = f'{datetime.now().strftime("J1939_%Y%m%d_%H%M%S")}'
         table_sizes[table_name]=0

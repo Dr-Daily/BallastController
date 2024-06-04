@@ -34,7 +34,7 @@ The breakout harness has the following connectors and pinouts:
 * Port Sensor: DT06-3S (sockets) with A:+5V, B:Ground, C:Signal
 * Center Sensor: DT06-3S (sockets) with A:+5V, B:Ground, C:Signal
 
-[ECU with breakout harness](ECUwithBreakoutHarness.png)
+![ECU with breakout harness](ECUwithBreakoutHarness.png)
 
 ## Sensor
 The sensors are mounted on the intake tubes of each ballast pump. The sensors were sourced from Amazon at this link: 
@@ -47,5 +47,5 @@ There are three sensors and three pumps:
 1. Port - mounted on the boat's left side behind the panel in the trunk.
 2. Starboard - mounted on the boat's left side behind the panel in the trunk.
 
-[Water Sensor on Pump Intake](BallastPumpWithSensor.png)
+![Water Sensor on Pump Intake](BallastPumpWithSensor.png)
 

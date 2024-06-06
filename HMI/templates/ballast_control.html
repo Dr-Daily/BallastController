@@ -114,6 +114,7 @@
 
 <script src="{{ url_for('static', filename='js/mqtt.min.js') }}"></script>
 <script type="text/javascript">
+   
     function updateTankLevel(level, tank) {
         let tankLevelElement;
         let tankPercentageElement;
@@ -152,34 +153,25 @@
     }
 
     function updateWaterSensors(waterSensorData) {
-        const portSensor = document.getElementById('port-water-sensor-container');
-        const centerSensor = document.getElementById('center-water-sensor-container');
-        const starboardSensor = document.getElementById('starboard-water-sensor-container');
-
-        if (waterSensorData.port === true) {
-            portSensor.style.backgroundColor = 'aqua';
-            portSensor.querySelector('span').textContent = 'Full';
-        } else {
-            portSensor.style.backgroundColor = 'orange';
-            portSensor.querySelector('span').textContent = 'Empty';
-        }
-
-        if (waterSensorData.center === true) {
-            centerSensor.style.backgroundColor = 'aqua';
-            centerSensor.querySelector('span').textContent = 'Full';
+        const sensors = {
+            port: document.getElementById('port-water-sensor-container'),
+            center: document.getElementById('center-water-sensor-container'),
+            starboard: document.getElementById('starboard-water-sensor-container')
+        };
+        
+        Object.keys(sensors).forEach(key => {
+            const sensor = sensors[key];
+            const sensorData = waterSensorData[key];
             
-        } else {
-            centerSensor.style.backgroundColor = 'orange';
-            centerSensor.querySelector('span').textContent = 'Empty';   
-        }
-
-        if (waterSensorData.starboard === true) {
-            starboardSensor.style.backgroundColor = 'aqua';
-            starboardSensor.querySelector('span').textContent = 'Full';
-        } else {
-            starboardSensor.style.backgroundColor = 'orange';
-            starboardSensor.querySelector('span').textContent = 'Empty';
-        }
+            if (sensorData === null) {
+                sensor.style.backgroundColor = 'grey';
+                sensor.querySelector('span').textContent = 'Unknown';
+            } else {
+                const isFull = sensorData === true;
+                sensor.style.backgroundColor = isFull ? 'aqua' : 'orange';
+                sensor.querySelector('span').textContent = isFull ? 'Full' : 'Empty';
+            }
+        });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -198,6 +190,7 @@
             client.subscribe(topics, (err) => {
                 if (!err) {
                     console.log('Subscribed to topics:', topics);
+                
                 }
             });
         });
@@ -207,6 +200,7 @@
             // message is a Buffer, convert it to string
             const data = message.toString();
             console.log(`Received topic ${top} with message: ${data}`);
+           
             if (top === 'data/water_sensors') {
                 const waterSensorData = JSON.parse(data);
                 updateWaterSensors(waterSensorData);

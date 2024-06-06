@@ -166,6 +166,7 @@ select {
 
 .water-sensor-container {
     width: 100%;
+    background-color: lightgrey;
     color: black;
 }
 .water-sensor-container span {

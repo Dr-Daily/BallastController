@@ -9,116 +9,6 @@ import logging
 from datetime import datetime
 import subprocess
 
-# Taken from the Global Source Addresses (B2) tab of the J1939DA_Feb24
-j1939_SA={
-0	:{'name':"Engine #1"},
-1	:{'name':"Engine #2"},
-2	:{'name':"Turbocharger"},
-3	:{'name':"Transmission #1"},
-4	:{'name':"Transmission #2"},
-5	:{'name':"Shift Console - Primary"},
-6	:{'name':"Shift Console - Secondary"},
-7	:{'name':"Power TakeOff - (Main or Rear)"},
-8	:{'name':"Axle - Steering"},
-9	:{'name':"Axle - Drive #1"},
-10	:{'name':"Axle - Drive #2"},
-11	:{'name':"Brakes - System Controller"},
-12	:{'name':"Brakes - Steer Axle"},
-13	:{'name':"Brakes - Drive axle #1"},
-14	:{'name':"Brakes - Drive Axle #2"},
-15	:{'name':"Retarder - Engine"},
-16	:{'name':"Retarder - Driveline"},
-17	:{'name':"Cruise Control"},
-18	:{'name':"Fuel System"},
-19	:{'name':"Steering Controller"},
-20	:{'name':"Suspension - Steer Axle"},
-21	:{'name':"Suspension - Drive Axle #1"},
-22	:{'name':"Suspension - Drive Axle #2"},
-23	:{'name':"Instrument Cluster #1"},
-24	:{'name':"Trip Recorder"},
-25	:{'name':"Passenger-Operator Climate Control #1"},
-26	:{'name':"Alternator/Electrical Charging System"},
-27	:{'name':"Aerodynamic Control"},
-28	:{'name':"Vehicle Navigation"},
-29	:{'name':"Vehicle Security"},
-30	:{'name':"Electrical System"},
-31	:{'name':"Starter System"},
-32	:{'name':"Tractor-Trailer Bridge #1"},
-33	:{'name':"Body Controller"},
-34	:{'name':"Auxiliary Valve Control or Engine Air System Valve Control"},
-35	:{'name':"Hitch Control"},
-36	:{'name':"Power TakeOff (Front or Secondary)"},
-37	:{'name':"Off Vehicle Gateway"},
-38	:{'name':"Virtual Terminal (in cab)"},
-39	:{'name':"Management Computer #1"},
-40	:{'name':"Cab Display #1"},
-41	:{'name':"Retarder, Exhaust, Engine #1"},
-42	:{'name':"Headway Controller"},
-43	:{'name':"On-Board Diagnostic Unit"},
-44	:{'name':"Retarder, Exhaust, Engine #2"},
-45	:{'name':"Endurance Braking System"},
-46	:{'name':"Hydraulic Pump Controller"},
-47	:{'name':"Suspension - System Controller #1"},
-48	:{'name':"Pneumatic - System Controller"},
-49	:{'name':"Cab Controller - Primary"},
-50	:{'name':"Cab Controller - Secondary"},
-51	:{'name':"Tire Pressure Controller"},
-52	:{'name':"Ignition Control Module #1"},
-53	:{'name':"Ignition Control Module #2"},
-54	:{'name':"Seat Control #1"},
-55	:{'name':"Lighting - Operator Controls"},
-56	:{'name':"Rear Axle Steering Controller #1"},
-57	:{'name':"Water Pump Controller"},
-58	:{'name':"Passenger-Operator Climate Control #2"},
-59	:{'name':"Transmission Display - Primary"},
-60	:{'name':"Transmission Display - Secondary"},
-61	:{'name':"Exhaust Emission Controller"},
-62	:{'name':"Vehicle Dynamic Stability Controller"},
-63	:{'name':"Oil Sensor"},
-64	:{'name':"Suspension - System Controller #2"},
-65	:{'name':"Information System Controller #1"},
-66	:{'name':"Ramp Control"},
-67	:{'name':"Clutch/Converter Unit"},
-68	:{'name':"Auxiliary Heater #1"},
-69	:{'name':"Auxiliary Heater #2"},
-70	:{'name':"Engine Valve Controller"},
-71	:{'name':"Chassis Controller #1"},
-72	:{'name':"Chassis Controller #2"},
-73	:{'name':"Propulsion Battery Charger"},
-74	:{'name':"Communications Unit, Cellular"},
-75	:{'name':"Communications Unit, Satellite"},
-76	:{'name':"Communications Unit, Radio"},
-77	:{'name':"Steering Column Unit"},
-78	:{'name':"Fan Drive Controller"},
-79	:{'name':"Seat Control #2"},
-80	:{'name':"Parking Brake Controller"},
-81	:{'name':"Aftertreatment #1 system gas intake"},
-82	:{'name':"Aftertreatment #1 system gas outlet"},
-83	:{'name':"Safety Restraint System"},
-84	:{'name':"Cab Display #2"},
-85	:{'name':"Diesel Particulate Filter Controller"},
-86	:{'name':"Aftertreatment #2 system gas intake"},
-87	:{'name':"Aftertreatment #2 system gas outlet"},
-88	:{'name':"Safety Restraint System #2"},
-89	:{'name':"Atmospheric Sensor"},
-90	:{'name':"Powertrain Control Module"},
-91	:{'name':"Power Systems Manager"},
-92	:{'name':"Engine Injection Control Module"},
-93	:{'name':"Fire Protection System"},
-94	:{'name':"Driver Impairment Device"},
-95	:{'name':"Supply Equipment Communication Controller (SECC)"},
-96	:{'name':"Vehicle Adapter Communication Controller (VACC)"},
-97	:{'name':"Fuel Cell System"},
-248	:{'name':"File Server / Printer"},
-249	:{'name':"Off Board Diagnostic-Service Tool #1"},
-250	:{'name':"Off Board Diagnostic-Service Tool #2"},
-251	:{'name':"On-Board Data Logger"},
-252	:{'name':"Reserved for Experimental Use"},
-253	:{'name':"Reserved for OEM"},
-254	:{'name':"Null Address"},
-255	:{'name':"GLOBAL (All-Any Node)"}
-}
-
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='can_socket_server %(levelname)s:%(message)s')
 
@@ -131,6 +21,7 @@ MQTT_SIZE_TOPIC = "data/sizes"
 MQTT_WATER_SENSOR_TOPIC = "data/water_sensors"
 
 UPDATE_PERIOD = .75 #second
+freshness_timeout_ms = 5000
 
 # To match this data structure, the following struct format can be used:
 can_frame_format = "<lB3x8s"
@@ -213,6 +104,7 @@ def publish_stats(client, cursor, table_name):
     interface = "can0"
     # Bind to the interface
     sock.bind((interface,))
+    sock.settimeout(1.0)
     
     #Setup some defaults
     # volts = "N/A"
@@ -241,14 +133,22 @@ def publish_stats(client, cursor, table_name):
     size_start_time = start_time
     water_sensor_start_time = start_time
     water_sensor_data = {}
+    freshness = 0 # 0xFFFFFFFF # the highest 32 bit unsigned integer
     last_water_sensor_freshness = 0
+    water_sensor_data_time = 0    
     loop_time = start_time
     last_loop_time = 0
     while True:
         # Read the message from the newtork
         try:
             can_packet = sock.recv(16)
+        except socket.timeout:
+            water_sensor_data = {'center':None, 'port':None, 'starboard':None}
+            client.publish(MQTT_WATER_SENSOR_TOPIC, json.dumps(water_sensor_data))
+            continue
         except OSError as e:
+            water_sensor_data = {'center':None, 'port':None, 'starboard':None}
+            client.publish(MQTT_WATER_SENSOR_TOPIC, json.dumps(water_sensor_data))
             logger.info(f"Reading {interface} failed with error {e}")
             time.sleep(1)
             sock = socket.socket(socket.PF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
@@ -257,10 +157,12 @@ def publish_stats(client, cursor, table_name):
             logger.debug(sock)
             continue
         
+        #Since a message was receive, increment the table size
+        table_sizes[table_name]+=1
+
         # get the system time as soon after the message is read
         can_time = time.time() #This is jittery and may not reflect actual bus time, but it's close.
-        loop_time = int((can_time - last_loop_time)*1000000)
-        last_loop_time = can_time
+        
         #Parse the bytes into a CAN message
         can_id, can_dlc, can_data, can_id_string = unpack_CAN(can_packet)
         can_data_string = " ".join(["{:02X}".format(b) for b in can_data])
@@ -271,55 +173,32 @@ def publish_stats(client, cursor, table_name):
         table_data.append((can_time, interface, pgn, sa, da, can_id, can_dlc, can_data_string))
         
         if can_id == 0x19F21139:
+            water_sensor_data_time = can_time
             freshness = struct.unpack("<L",can_data[4:8])[0]
-            if freshness > last_water_sensor_freshness:
-                # update the information with new data   
+            if (freshness > last_water_sensor_freshness): #new message
+                last_water_sensor_freshness = freshness
                 water_sensor_data['center'] = bool(can_data[0])
                 water_sensor_data['port'] = bool(can_data[1])
                 water_sensor_data['starboard'] = bool(can_data[2])
             else:
-                water_sensor_data['center'] = None
-                water_sensor_data['port'] = None
-                water_sensor_data['starboard'] = None
-            water_sensor_data['loop_time'] = loop_time
-            last_water_sensor_freshness = freshness
-    
-        # #Make a summary of the CAN messages.
-        #Move this to the database
-        # if sa in data["Source"]:
-        #     data["Source"][sa]['count']+=1
-        # else:
-        #     data["Source"][sa]={'count': 1}
-        #     data["Source"][sa]['address'] = sa
-        #     data["Source"][sa]['pgns'] = {}
-        #     try:
-        #         data["Source"][sa]['name'] = j1939_SA[sa]['name']
-        #     except KeyError:
-        #         data["Source"][sa]['name'] = "Unknown"
-        
-        # if pgn in data["Source"][sa]['pgns']:
-        #     data["Source"][sa]['pgns'][pgn]['count']+=1
-        #     data["Source"][sa]['pgns'][pgn]['time_delta'] = "{:d}ms".format(
-        #         int((can_time - data["Source"][sa]['pgns'][pgn]['time'])*1000))
-        # else:
-        #     data["Source"][sa]['pgns'][pgn] = {'count': 1}
-        #     data["Source"][sa]['pgns'][pgn]['id']=can_id_string
-        #     data["Source"][sa]['pgns'][pgn]['time_delta']= 0
-        #     data["Source"][sa]['pgns'][pgn]['da']=da
-        
-        # data["Source"][sa]['pgns'][pgn]['data'] = can_data_string
-        # data["Source"][sa]['pgns'][pgn]['time'] = can_time
+                water_sensor_data =  {'center':None, 'port':None, 'starboard':None}
+                
+            logger.debug(f"freshness: {freshness}, center: {can_data[0]}, port: {can_data[1]}, starboard: {can_data[2]} ")
             
-    
-        table_sizes[table_name]+=1
+        
         if (can_time - water_sensor_start_time) > .73:
             water_sensor_start_time = can_time
-            client.publish(MQTT_WATER_SENSOR_TOPIC, json.dumps(water_sensor_data,sort_keys=True))
-            logger.debug(f"Published to {MQTT_WATER_SENSOR_TOPIC}: {json.dumps(water_sensor_data,sort_keys=True)}")
+            logger.debug(f"difference {can_time - water_sensor_data_time}")
+            if (can_time - water_sensor_data_time) > 1:
+                # The timeout was exceeded, so the data is not fresh
+                water_sensor_data =  {'center':None, 'port':None, 'starboard':None}
+                last_water_sensor_freshness = 0
+            
+            client.publish(MQTT_WATER_SENSOR_TOPIC, json.dumps(water_sensor_data))
+            logger.debug(f"Published to {MQTT_WATER_SENSOR_TOPIC}: {json.dumps(water_sensor_data)}")
 
         if (can_time - start_time) > .91:
             start_time = time.time()
-            #client.publish(MQTT_TOPIC, json.dumps(data)) #the following command explodes when 
             try:
                 cursor.execute('BEGIN;')
                 # ITERATE through the list of stored CAN data
@@ -327,12 +206,6 @@ def publish_stats(client, cursor, table_name):
                     cursor.execute(f'''
                     INSERT INTO {table_name} (timestamp, interface, pgn, sa, da, can_id, can_dlc, data)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',(item))
-                # Update the number of messages
-                cursor.execute('''
-                    UPDATE table_metadata 
-                    SET num_messages = ? 
-                    WHERE table_name = ?
-                ''', (table_sizes[table_name], table_name))
                 cursor.execute('COMMIT;')
             except sqlite3.Error as e:
                 # Rollback the transaction in case of error
@@ -345,7 +218,7 @@ def publish_stats(client, cursor, table_name):
         if (can_time - size_start_time) > 1.91:
             size_start_time = time.time()
             client.publish(MQTT_SIZE_TOPIC, json.dumps(table_sizes,sort_keys=True))
-            logger.debug(f"Published to {MQTT_SIZE_TOPIC}:\n {json.dumps(table_sizes,indent=2,sort_keys=True)}")
+            logger.debug(f"Published to {MQTT_SIZE_TOPIC}: {json.dumps(table_sizes,)}")
         
 
 if __name__ == "__main__":    
@@ -378,37 +251,10 @@ if __name__ == "__main__":
         conn.execute('PRAGMA cache_size=10000;')
         logger.info(f"Connected can_messages.db")
         
-        # Create the metadata table if it doesn't exist
-        conn.execute('''
-        CREATE TABLE IF NOT EXISTS table_metadata (
-            table_name TEXT PRIMARY KEY,
-            creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            channel TEXT,
-            bitrate INTEGER,
-            num_messages INTEGER      
-        )
-        ''')
         cursor = conn.cursor()
         
-        logger.info(f"Created table_metadata in can_messages.db")
-        #Get a dozen Existing tables:
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' LIMIT 12")
-        rows = cursor.fetchall()
-        
-        tables = [row[0] for row in rows if row[0] != 'sqlite_sequence']
-
-        # Get table sizes
-        table_sizes = {}
-        # for table in tables:
-        #     cursor.execute(f"SELECT COUNT(*) FROM {table}")
-        #     row_count = cursor.fetchone()[0]   
-        #     table_sizes[table]=row_count
-
-        # client.publish(MQTT_SIZE_TOPIC, json.dumps(table_sizes))
-        # logger.info(f"Published table sizes to {MQTT_SIZE_TOPIC}")
-
         table_name = f'{datetime.now().strftime("J1939_%Y%m%d_%H%M%S")}'
-        table_sizes[table_name]=0
+        table_sizes = {table_name: 0}
         try:
             cursor.execute(f'''
                 CREATE TABLE IF NOT EXISTS {table_name} (

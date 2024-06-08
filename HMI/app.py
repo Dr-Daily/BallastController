@@ -156,7 +156,7 @@ def index():
 
 @app.route('/ballast_control')
 def ballast_control():
-    return render_template('ballast_control.html')
+    return render_template('ballast_control.html', server_ip=get_ip_address())
 
 @app.route('/j1939_display')
 def j1939_display():
@@ -164,11 +164,11 @@ def j1939_display():
 
 @app.route('/remote_rudder')
 def remote_rudder():
-    return render_template('remote_rudder.html')
+    return render_template('remote_rudder.html', server_ip=get_ip_address())
 
-@app.route('/mqtt')
-def mqtt():
-    return render_template('mqtt.html')
+@app.route('/test')
+def test():
+    return render_template('can_websocket_test.html', server_ip=get_ip_address())
 
 
 ############################################
@@ -323,40 +323,40 @@ def get_ip():
     return jsonify({'ip': ip_address})
 
 
-def get_can_stats():
-    # Command to get CAN statistics with detailed information
-    command = "ip -details -statistics link show can0"
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
-    if result.returncode != 0:
-        return {"error": "Failed to retrieve CAN statistics"}
+# def get_can_stats():
+#     # Command to get CAN statistics with detailed information
+#     command = "ip -details -statistics link show can0"
+#     result = subprocess.run(command, shell=True, capture_output=True, text=True)
+#     if result.returncode != 0:
+#         return {"error": "Failed to retrieve CAN statistics"}
     
-    # Parsing the result
-    stats = {}
-    stat_lines = result.stdout.split('\n')
-    for line in range(len(stat_lines)):
-        if 'can state' in stat_lines[line]:
-            stats['CANstate'] = stat_lines[line].strip().split()[2]
-            if "ERROR" in stats['CANstate']:
-                stats['CANstate'] = stats['CANstate'].split('-')[-1]
-        elif 'bitrate' in stat_lines[line]:
-            bitrate = int(stat_lines[line].strip().split()[1])//1000
-            stats['CANbitrate'] = f"{bitrate}k"
-        elif 'RX:' in stat_lines[line]:
-            rx_header = stat_lines[line].strip().split()[1:] #Remove the "RX:"
-            rx_line = stat_lines[line+1].strip().split()
-            for k,v in zip(rx_header,rx_line):
-                stats['CANRX'+k] = humanize.naturalsize(int(v), binary=True)
-        elif 'TX:' in stat_lines[line]:
-            tx_header = stat_lines[line].strip().split()[1:] #Remove the "TX:"
-            tx_line = stat_lines[line+1].strip().split()
-            for k,v in zip(tx_header,tx_line):
-                stats['CANTX'+k] = v
-    return stats
+#     # Parsing the result
+#     stats = {}
+#     stat_lines = result.stdout.split('\n')
+#     for line in range(len(stat_lines)):
+#         if 'can state' in stat_lines[line]:
+#             stats['CANstate'] = stat_lines[line].strip().split()[2]
+#             if "ERROR" in stats['CANstate']:
+#                 stats['CANstate'] = stats['CANstate'].split('-')[-1]
+#         elif 'bitrate' in stat_lines[line]:
+#             bitrate = int(stat_lines[line].strip().split()[1])//1000
+#             stats['CANbitrate'] = f"{bitrate}k"
+#         elif 'RX:' in stat_lines[line]:
+#             rx_header = stat_lines[line].strip().split()[1:] #Remove the "RX:"
+#             rx_line = stat_lines[line+1].strip().split()
+#             for k,v in zip(rx_header,rx_line):
+#                 stats['CANRX'+k] = humanize.naturalsize(int(v), binary=True)
+#         elif 'TX:' in stat_lines[line]:
+#             tx_header = stat_lines[line].strip().split()[1:] #Remove the "TX:"
+#             tx_line = stat_lines[line+1].strip().split()
+#             for k,v in zip(tx_header,tx_line):
+#                 stats['CANTX'+k] = v
+#     return stats
 
-@app.route('/api/can_stats', methods=['GET'])
-def can_stats():
-    stats = get_can_stats()
-    return jsonify(stats)
+# @app.route('/api/can_stats', methods=['GET'])
+# def can_stats():
+#     stats = get_can_stats()
+#     return jsonify(stats)
 
 def start_can(bitrate):
     '''

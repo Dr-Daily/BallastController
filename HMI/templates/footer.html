@@ -8,8 +8,38 @@
             document.getElementById('ip_button').innerText = 'IP not available';
         }
     }
+    let topic;
+    let mesage;
+    document.addEventListener('DOMContentLoaded', () => {
+        // Replace with your WebSocket server address
+        const serverIp = "{{ server_ip }}";
+        const ws = new WebSocket(`ws://192.168.1.136:8765`);
+
+        ws.onopen = () => {
+            document.getElementById('status').textContent = 'Connected';
+        };
+
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            topic = message.topic;
+            console.log(`topic: ${topic}`)
+            data = message.data
+            console.log(`data: ${data}`)
+            if (topic === 'cansocket/stats') {
+                updateCANStatus(data);
+            }
+        };
+
         
-    document.addEventListener('DOMContentLoaded', function(){
+        ws.onclose = () => {
+            document.getElementById('status').textContent = 'Disconnected';
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket Error:', error);
+            document.getElementById('status').textContent = 'Error';
+        };
+
         function updateTime() {
             const now = new Date();
             const timeString = now.toLocaleTimeString();
@@ -19,18 +49,11 @@
         }
 
         
-        async function updateCANStatus(message){
-            try {
-                const response = await fetch('/api/can_stats');
-                const data = await response.json();
-                document.getElementById('CANbitrate').innerText = data.CANbitrate;
-                document.getElementById('CANstate').innerText = data.CANstate;
-                document.getElementById('CANRXbytes').innerText = data.CANRXbytes
-            } catch (error) {
-                document.getElementById('CANbitrate').innerText = 'Error';
-                document.getElementById('CANstate').innerText = error;
-                document.getElementById('CANRXbytes').innerText = "N/A"
-            }
+        function updateCANStatus(data){
+            document.getElementById('CANbitrate').innerText = data.CANbitrate;
+            document.getElementById('CANstate').innerText = data.CANstate;
+            document.getElementById('CANRXbytes').innerText = data.CANRXbytes
+            
         }
 
         updateTime();
@@ -39,8 +62,6 @@
         fetchIP();
         // setInterval(fetchIP, 3001);
 
-        updateCANStatus(" Finished Loading")
-        setInterval(updateCANStatus, 2023);
     });
 </script>
 <style>

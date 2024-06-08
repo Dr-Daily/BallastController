@@ -99,7 +99,7 @@
             
             
         </form> -->
-        SA: Name (count)
+        <button onclick="fetchSourceAddresses()">SA Name (count)</button>
     </div>
     <div class="sa-button-container" id="sa-buttons-container">
         <!-- Buttons will be dynamically inserted here -->
@@ -130,10 +130,14 @@
 
 <script src="{{ url_for('static', filename='js/mqtt.min.js') }}"></script>
 <script type="text/javascript">
+
+let lastClickedSAButton = null;
+let lastActiveSAButton = null;
+
 document.addEventListener("DOMContentLoaded", () => {
     // Connect to the local MQTT broker
     const serverIp = "{{ server_ip }}";
-    const brokerUrl = `ws://${serverIp}:8080`;
+    const brokerUrl = `ws://${serverIp}:9001`;
     // Connect to the MQTT broker on the server
     const client = mqtt.connect(brokerUrl);
     
@@ -150,8 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    let lastClickedSAButton = null;
-    let lastActiveSAButton = null;
+    
 
     // Called when a message arrives
     // These must be running.
@@ -167,67 +170,89 @@ document.addEventListener("DOMContentLoaded", () => {
         if (top === 'data/sizes'){
             const sizeData = JSON.parse(data);
             console.log(`Received topic ${top} with message: ${data}`);
-            fetchTables(sizeData)
+            const key = Object.keys(sizeData)[0];
+            fetchTables(key);
         }
         else
         {
             
-        // console.log(`Received message: ${data}`);
-        const CANData = JSON.parse(data);
-        
-        const buttonsContainer = document.getElementById('sa-buttons-container');
-        buttonsContainer.innerHTML = ''; // Clear previous buttons
-
-        for (const sa in CANData.Source) {
-            if (CANData.Source.hasOwnProperty(sa)) {
-                const item = CANData.Source[sa];
-                const button = document.createElement('button');
-                button.textContent = sa + ": " + item.name + " (" + item.count + ")";
-                button.setAttribute('data-key', sa);
-                button.setAttribute('class','sa-button')
-                button.addEventListener('click', function() {
-                    // Latch the last clicked button
-                    if (lastClickedSAButton) {
-                        lastClickedSAButton.classList.remove('active');
-                    }
-                    button.classList.add('active');
-                    lastActiveSAButton = button;
-                    lastClickedSAButton = button;
-                    displayPGN(item);
-                });
-                // Append the button to the buttons container
-                buttonsContainer.appendChild(button);
-                // Add a <br> tag after each button
-                buttonsContainer.appendChild(document.createElement('br'));
-                
-                // Add if there are no active buttons, then add this one.
-                if (lastActiveSAButton === null){
-                    lastActiveSAButton = button
-                }
-
-
-                // If this is the last clicked button, ensure it remains active and display its data
-                if (lastClickedSAButton && lastClickedSAButton.getAttribute('data-key') === sa) {
-                    button.classList.add('active');
-                    lastActiveSAButton = button;
-                    displayPGN(item);
-                }
-            }
         }
-    }
-    });
-
+    })
 
     // Called when the client disconnects
     client.on('close', () => {
         console.log('Disconnected from MQTT broker');
     });
 
-    //initialize the menu.
-    fetchTables({})
-    const live = document.getElementById('data-table-live');
-    live.setAttribute('selected','selected')
 });
+
+function showTableName(table_name){
+
+}
+
+async function fetchSourceAddresses(table_name) {
+    try {
+        const response = await fetch(`/api/source_addresses?table_name=${table_name}`);
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        if (data.status === 'success') {
+            console.log(`source_addresses: ${data.source_addresses}`)
+            displaySA(data.source_addresses,table_name);
+        } else {
+            console.error('Error:', data);
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+}
+
+function displaySA(source_addresses,table_name){
+    // console.log(`Retrieving: ${table_name}`);
+     
+    // const CANData = JSON.parse(data);
+        
+    const buttonsContainer = document.getElementById('sa-buttons-container');
+    buttonsContainer.innerHTML = ''; // Clear previous buttons
+
+    for (const sa in source_addresses) {
+        if (source_addresses.hasOwnProperty(sa)) {
+            const item = source_addresses[sa];
+            const button = document.createElement('button');
+            button.textContent = sa + ": " + item.name + " (" + item.count + ")";
+            button.setAttribute('data-key', sa);
+            button.setAttribute('class','sa-button')
+            button.addEventListener('click', function() {
+                // Latch the last clicked button
+                if (lastClickedSAButton) {
+                    lastClickedSAButton.classList.remove('active');
+                }
+                button.classList.add('active');
+                lastActiveSAButton = button;
+                lastClickedSAButton = button;
+                displayPGN(item);
+            });
+            // Append the button to the buttons container
+            buttonsContainer.appendChild(button);
+            // Add a <br> tag after each button
+            buttonsContainer.appendChild(document.createElement('br'));
+            
+            // Add if there are no active buttons, then add this one.
+            if (lastActiveSAButton === null){
+                lastActiveSAButton = button
+            }
+
+
+            // If this is the last clicked button, ensure it remains active and display its data
+            if (lastClickedSAButton && lastClickedSAButton.getAttribute('data-key') === sa) {
+                button.classList.add('active');
+                lastActiveSAButton = button;
+                displayPGN(item);
+            }
+        }
+    }
+}
 
 function fetchTables(tables) {
     const downloadsContainer = document.getElementById('downloads-container');
@@ -237,7 +262,7 @@ function fetchTables(tables) {
     for (const [key, value] of Object.entries(tables)) {
         const link = document.createElement('a');
         link.href = `/api/download?table_name=${key}`; // Assuming your download endpoint uses this query parameter
-        link.textContent = `${key} (${value})`;
+        link.textContent = `${key} [${value}]`;
         // link.download = key; // This attribute suggests the browser to download the resource
         downloadsContainer.appendChild(link);
         const linebreak = document.createElement('br');
@@ -401,6 +426,40 @@ async function stopCAN() {
         alert('An error occurred while stopping CAN');
     }
 }
+
+
+async function fetchTables() {
+    try {
+        const response = await fetch('/api/tables');
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        if (data.status === 'success') {
+            displayTables(data.tables);
+        } else {
+            console.error('Error:', data.output);
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+}
+
+function displayTables(tables) {
+    const tableList = document.getElementById('tableList');
+    tableList.innerHTML = '';
+    tables.forEach(table => {
+        const listItem = document.createElement('li');
+        listItem.textContent = table;
+        tableList.appendChild(listItem);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchTables();
+    const refreshButton = document.getElementById('refreshButton');
+    refreshButton.addEventListener('click', fetchTables);
+});
 </script>
 
 {% endblock %}

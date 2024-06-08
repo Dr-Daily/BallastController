@@ -1,0 +1,38 @@
+<!-- templates/ballast_control.html -->
+{% extends 'base.html' %}
+
+{% block title %}Ballast Controller{% endblock %}
+
+{% block content %}
+<h4>CAN WebSocket Client</h4>
+    <div id="status">Connecting...</div>
+    <div id="data"></div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Replace with your WebSocket server address
+        const serverIp = "{{ server_ip }}";
+        const ws = new WebSocket(`ws://192.168.1.136:8765`);
+
+        ws.onopen = () => {
+            document.getElementById('status').textContent = 'Connected';
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const dataDiv = document.getElementById('data');
+            const message = document.createElement('div');
+            message.textContent = `Topic: ${data.topic}, Data: ${JSON.stringify(data.data)}`;
+            dataDiv.appendChild(message);
+        };
+
+        ws.onclose = () => {
+            document.getElementById('status').textContent = 'Disconnected';
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket Error:', error);
+            document.getElementById('status').textContent = 'Error';
+        };
+    });
+</script>
+{% endblock %}

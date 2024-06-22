@@ -200,8 +200,8 @@ def write_to_db(table_name):
             except sqlite3.Error as e:
                 cursor.execute('ROLLBACK;')
                 logger.warning(f"SQLite transaction error: {e}")
-        logger.debug(f"Inserted {len(table_data)} lines into the database.")
-        table_data = []
+            logger.debug(f"Inserted {len(table_data)} lines into the database.")
+            table_data = []
         time.sleep(UPDATE_PERIOD)
         
 
@@ -517,7 +517,7 @@ if __name__ == '__main__':
     
     logger.info("Running flask app on port 5000")
     # Run Flask app with SocketIO
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True )
 
     # Keep the main thread alive
     try:

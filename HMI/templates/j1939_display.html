@@ -83,6 +83,7 @@
                 <option value="1000000">Start (1M)</option>
             </select>
             <button class="can-control-button" type="button" id='can-control-button' onclick="stopCAN()">Stop CAN</button>
+            <button class="can-logging-button" type="button" id='can-logging-button' onclick="startLogging()">Start Logging CAN</button>
             
         </form>
     </div>
@@ -128,53 +129,24 @@
     <!-- Data will be dynamically displayed here -->
 <!-- </div> -->
 
-<script src="{{ url_for('static', filename='js/mqtt.min.js') }}"></script>
 <script type="text/javascript">
-document.addEventListener("DOMContentLoaded", () => {
-    // Connect to the local MQTT broker
-    const serverIp = "{{ server_ip }}";
-    const brokerUrl = `ws://${serverIp}:8080`;
-    // Connect to the MQTT broker on the server
-    const client = mqtt.connect(brokerUrl);
-    
-    // Set the topic you want to subscribe to
-    const topics = ['j1939/stats','data/sizes'];
 
-    // Called when the client connects
-    client.on('connect', () => {
-        console.log('Connected to MQTT broker');
-        client.subscribe(topics, (err) => {
-            if (!err) {
-                console.log('Subscribed to topics:', topics);
-            }
-        });
+document.addEventListener("DOMContentLoaded", () => {
+    const serverIp = "{{ server_ip }}";
+    const socket = io(`${serverIp}:5000`);
+    socket.on('connect', function() {
+        console.log('Connected to WebSocket');
+    });
+    socket.on('disconnect', function() {
+        console.log('Disconnected from WebSocket');
     });
 
     let lastClickedSAButton = null;
     let lastActiveSAButton = null;
 
-    // Called when a message arrives
-    // These must be running.
-    // sudo systemctl restart flask-app.service
-    // sudo systemctl restart mosquitto.service
-    // sudo systemctl restart can-websocket-server.service
 
-    client.on('message', function(topic, message) {
-        const top = topic.toString();
-        // message is a Buffer, convert it to string
-        const data = message.toString();
-        // console.log(`Received topic ${top} with message: ${data}`);
-        if (top === 'data/sizes'){
-            const sizeData = JSON.parse(data);
-            console.log(`Received topic ${top} with message: ${data}`);
-            fetchTables(sizeData)
-        }
-        else
-        {
-            
-        // console.log(`Received message: ${data}`);
-        const CANData = JSON.parse(data);
-        
+    socket.on('message', function(CANData) {
+        // console.log('message:', CANData);
         const buttonsContainer = document.getElementById('sa-buttons-container');
         buttonsContainer.innerHTML = ''; // Clear previous buttons
 
@@ -214,19 +186,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         }
-    }
-    });
-
-
-    // Called when the client disconnects
-    client.on('close', () => {
-        console.log('Disconnected from MQTT broker');
     });
 
     //initialize the menu.
     fetchTables({})
-    const live = document.getElementById('data-table-live');
-    live.setAttribute('selected','selected')
+    // const live = document.getElementById('data-table-live');
+    // live.setAttribute('selected','selected')
 });
 
 function fetchTables(tables) {
@@ -399,6 +364,21 @@ async function stopCAN() {
     } catch (error) {
         console.error('Error occurred while stopping CAN:', error);
         alert('An error occurred while stopping CAN');
+    }
+}
+async function startLogging() {
+    try {
+        const response = await fetch('start_logging', {
+            method: 'POST',
+        });
+
+        if (response.ok) {
+            
+        } else {
+            console.error('Failed to start logging:', response.statusText);
+        }
+    } catch (error) {
+        console.error('Error occurred while starting logging:', error);
     }
 }
 </script>

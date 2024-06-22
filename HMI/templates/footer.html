@@ -1,3 +1,4 @@
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 <script>
     async function fetchIP() {
         try {
@@ -18,19 +19,24 @@
             document.getElementById('time').innerText = `${dateString} ${timeString}`;
         }
 
+        const serverIp = "{{ server_ip }}";
+        const sock = io(`${serverIp}:5000`);
+        sock.on('connect', function() {
+            console.log('Connected to WebSocket');
+        });
+        sock.on('disconnect', function() {
+            console.log('Disconnected from WebSocket');
+        });
+        sock.on('can_stats', function(msg) {
+            // console.log('can_stats:', msg);
+            updateCANStatus(msg)
+        });
         
-        async function updateCANStatus(message){
-            try {
-                const response = await fetch('/api/can_stats');
-                const data = await response.json();
-                document.getElementById('CANbitrate').innerText = data.CANbitrate;
-                document.getElementById('CANstate').innerText = data.CANstate;
-                document.getElementById('CANRXbytes').innerText = data.CANRXbytes
-            } catch (error) {
-                document.getElementById('CANbitrate').innerText = 'Error';
-                document.getElementById('CANstate').innerText = error;
-                document.getElementById('CANRXbytes').innerText = "N/A"
-            }
+        function updateCANStatus(msg){
+            const data = msg.can0
+            document.getElementById('CANbitrate').innerText = data.CANbitrate;
+            document.getElementById('CANstate').innerText = data.CANstate;
+            document.getElementById('CANRXbytes').innerText = data.CANRXbytes
         }
 
         updateTime();
@@ -39,8 +45,8 @@
         fetchIP();
         // setInterval(fetchIP, 3001);
 
-        updateCANStatus(" Finished Loading")
-        setInterval(updateCANStatus, 2023);
+        // updateCANStatus(" Finished Loading")
+        // setInterval(updateCANStatus, 2023);
     });
 </script>
 <style>
@@ -68,7 +74,7 @@
         <span id="time"></span>
     </div>
     <div>
-        CAN&nbsp;<span id="CANstate">state</span>&nbsp;(<span id="CANbitrate">bitrate</span>)&nbsp;RX:<span id="CANRXbytes">bitrate</span>
+        <span id="CANinterface">CAN0</span>&nbsp;<span id="CANstate">state</span>&nbsp;(<span id="CANbitrate">bitrate</span>)&nbsp;RX:<span id="CANRXbytes">bitrate</span>
     </div>
     <div>
         <button class="footer-button" id="ip_button" onclick="fetchIP()"></button>

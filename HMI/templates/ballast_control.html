@@ -112,7 +112,7 @@
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/mqtt.min.js') }}"></script>
+
 <script type="text/javascript">
     function updateTankLevel(level, tank) {
         let tankLevelElement;
@@ -184,38 +184,25 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         // Connect to the local MQTT broker
-        const serverIp = '{{ server_ip }}';
-        const brokerUrl = `ws://${serverIp}:8080`;
-        // Connect to the MQTT broker on the server
-        const client = mqtt.connect(brokerUrl);
-
-        // Set the topic you want to subscribe to
-        const topics = ['data/water_sensors'];
-
-        // Called when the client connects
-        client.on('connect', () => {
-            console.log('Connected to MQTT broker');
-            client.subscribe(topics, (err) => {
-                if (!err) {
-                    console.log('Subscribed to topics:', topics);
-                }
-            });
+        const serverIp = "{{ server_ip }}";
+        const socket = io(`${serverIp}:5000`);
+        socket.on('connect', function() {
+            console.log('Connected to WebSocket');
         });
-
-        client.on('message', (topic, message) => {
-            const top = topic.toString();
+        socket.on('disconnect', function() {
+            console.log('Disconnected from WebSocket');
+        });
+        socket.on('level_sensors', function(sensor_data) {
+            console.log('level_sensors:', sensor_data);
             // message is a Buffer, convert it to string
-            const data = message.toString();
-            console.log(`Received topic ${top} with message: ${data}`);
-            if (top === 'data/water_sensors') {
-                const waterSensorData = JSON.parse(data);
-                updateWaterSensors(waterSensorData);
-            }
+            // const data = message.toString();
+            // const CANData = JSON.parse(data);
+            
         });
 
         // Called when the client disconnects
-        client.on('close', () => {
-            console.log('Disconnected from MQTT broker');
+        socket.on('close', () => {
+            console.log('Disconnected from websocket');
         });
 
         updateTankLevel(12, 'port');

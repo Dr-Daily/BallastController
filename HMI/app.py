@@ -145,7 +145,7 @@ def process_data():
             try:
                 summary_data[interface]["source"][sa]['pgns'][pgn]['count'] += 1
             except KeyError:
-                summary_data[interface]["source"][sa]['pgns'][pgn] = {'count': 1}
+                summary_data[interface]["source"][sa]['pgns'][pgn] = {'count': 1,'sums':[0,0,0,0,0,0,0,0],'sumsquared':[0,0,0,0,0,0,0,0] }
                 
             summary_data[interface]["source"][sa]['pgns'][pgn]['time'] = can_time
             summary_data[interface]["source"][sa]['pgns'][pgn]['id'] = can_id_string
@@ -153,7 +153,9 @@ def process_data():
             summary_data[interface]["source"][sa]['pgns'][pgn]['data'] = can_data_string
             summary_data[interface]["source"][sa]['pgns'][pgn]['time_delta'] = "{:d}ms".format(
                     int((can_time - summary_data[interface]["source"][sa]['pgns'][pgn]['time']) * 1000))
-            
+            for i in range(len(can_data)):
+                summary_data[interface]["source"][sa]['pgns'][pgn]['sums'][i] += can_data[i]
+                summary_data[interface]["source"][sa]['pgns'][pgn]['sumsquared'][i] += can_data[i]**2
             
         socketio.emit('message', sa_data)  # Emit processed data to the WebSocket
         time.sleep(STATS_UPDATE_PERIOD)
@@ -186,9 +188,9 @@ def write_to_db(table_name):
     while True:
         while not processed_data_queue.empty():
             data = processed_data_queue.get() 
+        if logging_active.is_set():  # check to see if logging is active    
             #data = (interface, sa, pgn, can_time, da, can_id, can_data_string, can_data)
             table_data.append(data)
-        if logging_active.is_set():  # check to see if logging is active    
             try:
                 cursor.execute('BEGIN;')
                 for item in table_data:

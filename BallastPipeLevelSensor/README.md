@@ -21,7 +21,7 @@ The ECU utilizes a Deutsch DTM05-12s twelve position plug to interface with the 
 5. Not Connected
 6. Starboard Sensor
 7. Port Sensor
-8. Cener Sensor
+8. Center Sensor
 9. Not Connected
 10. J1939 CAN High
 11. Ground for Sensors

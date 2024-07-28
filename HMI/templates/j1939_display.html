@@ -6,12 +6,60 @@
 {% block content %}
 
 <style>
+    #table-container {
+        height: 500px; /* Adjust the height as needed */
+        overflow-y: auto;
+        border: 1px solid #ccc;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    th {
+        background-color: black;
+    }
+
+    .low-value { background-color:  darkgreen; }
+    .medium-value { background-color: darkgoldenrod; }
+    .high-value { background-color: darkred }
+
+    .download-button{
+        font-size: inherit;
+        background-color: lightgrey;
+        color: black;
+        width: 100%;
+    }
+    .start-can-logging-button{
+        font-size: inherit;
+        background-color: lightgreen;
+        color: black;
+        width: 100%;
+    }
+    .stop-can-logging-button{
+        font-size: inherit;
+        background-color: salmon;
+        color: black;
+        width: 100%;
+    }
+    .can-stop-button{
+        font-size: inherit;
+        background-color: salmon;
+        color: black;
+        width: 100%;
+    }
     .sa-button{
         font-size: inherit;
         background-color: steelblue;
         color: white;
         width: 100%;
-        text-align: left;
     }
     .sa-button.active {
             background-color: #4CAF50; /* Green background for the active button */
@@ -21,13 +69,11 @@
         display: grid;
         grid-template-rows: auto auto 1fr;
         grid-template-columns: 1fr;
-        justify-content: left; 
-        text-align: left;
+        justify-content: left;
     }
     .pgn-button{
         font-size: 48pt;
         background-color: rgb(72, 5, 76);
-        text-align: left;
         color: white;
         width: 100%;
     }
@@ -36,11 +82,8 @@
             color: white; /* White text for the active button */
         }
     .pgn-title-container{
-        text-align: center;
-        text-decoration: bold;
     }
     .pgn-header-container{
-        text-align: left;
         text-decoration: underline;
     }
     .pgn-container{
@@ -48,7 +91,6 @@
         grid-template-rows: auto auto 1fr;
         grid-template-columns: 1fr;
         justify-content: left; 
-        text-align: left;
     }
     .database-table-option {
         font-size: 36pt;
@@ -74,16 +116,18 @@
 <div class="sa-container">
     <div class="sa-button-container">
         <form  id="bitrate-form" method="POST">
-            <select id="bitrate-select"  name="bitrate" onchange="setBitrate(event)">
-                <option value="250000" id="start-can-option" selected>Start CAN</option>
+            <select id="bitrate-select"  name="bitrate" onselect="setBitrate(event)" onchange="setBitrate(event)" >
+                <option value="" id="start-can-option" selected>Start CAN</option>
                 <option value="125000">Start (125k)</option>
                 <option value="250000" >Start (250k)</option>
                 <option value="500000">Start (500k)</option>
                 <option value="666666">Start (666k)</option>
                 <option value="1000000">Start (1M)</option>
+                <option value="0" id="stop-can-option" hidden>Stop CAN</option>
             </select>
-            <button class="can-control-button" type="button" id='can-control-button' onclick="stopCAN()">Stop CAN</button>
-            <button class="can-logging-button" type="button" id='can-logging-button' onclick="startLogging()">Start Logging CAN</button>
+            <button class="can-stop-button" type="button" id='can-stop-button' onclick=stopCAN()>Stop CAN</button>
+            <button class="start-can-logging-button" type="button" id='start-can-logging-button' onclick="startLogging()">Start Logging CAN</button>
+            <button class="stop-can-logging-button" type="button" id='stop-can-logging-button' onclick="stopLogging()" hidden>Stop Logging CAN</button>
             
         </form>
     </div>
@@ -106,6 +150,15 @@
         <!-- Buttons will be dynamically inserted here -->
     </div>
     <div class="downloads-container" id="downloads-container">
+        
+        <form action="/api/download" method="post">
+            <input type="hidden" name="table_name" value="can_data">
+            <button class="download-button" id='download-button' type="submit">Download CSV</button>
+        </form>
+        <form action="/api/download_db" method="post">
+            <button class="download-button" id='download-db-button' type="submit">Download Database</button>
+        </form>
+        <button type="button" class="can-stop-button" onclick="confirmDelete('can_data')">Delete Table Contents</button>
         <!-- download links will be dynamically inserted here -->
     </div>
 </div>
@@ -124,6 +177,59 @@
 </div>
 <div class="can-data-container" id="can-data-container">
     <!-- Data will be dynamically displayed here -->
+    <div id="table-container">
+      <table id="data-table" border="1">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Val</th>
+                <th>STD</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th>B0</th>
+                <td id="b0_val"></td>
+                <td id="b0_std"></td>
+            </tr>
+            <tr>
+                <th>B1</th>
+                <td id="b1_val"></td>
+                <td id="b1_std"></td>
+            </tr>
+            <tr>
+                <th>B2</th>
+                <td id="b2_val"></td>
+                <td id="b2_std"></td>
+            </tr>
+            <tr>
+                <th>B3</th>
+                <td id="b3_val"></td>
+                <td id="b3_std"></td>
+            </tr>
+            <tr>
+                <th>B4</th>
+                <td id="b4_val"></td>
+                <td id="b4_std"></td>
+            </tr>
+            <tr>
+                <th>B5</th>
+                <td id="b5_val"></td>
+                <td id="b5_std"></td>
+            </tr>
+            <tr>
+                <th>B6</th>
+                <td id="b6_val"></td>
+                <td id="b6_std"></td>
+            </tr>
+            <tr>
+                <th>B7</th>
+                <td id="b7_val"></td>
+                <td id="b7_std"></td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
 </div>
 <!-- <div class="grid-cell" id="j1939-graphs"> -->
     <!-- Data will be dynamically displayed here -->
@@ -131,7 +237,12 @@
 
 <script type="text/javascript">
 
+let lastClickedSAButton = null;
+let lastActiveSAButton = null;
+let isCanRunning = true;
+
 document.addEventListener("DOMContentLoaded", () => {
+
     const serverIp = "{{ server_ip }}";
     const socket = io(`${serverIp}:5000`);
     socket.on('connect', function() {
@@ -140,19 +251,26 @@ document.addEventListener("DOMContentLoaded", () => {
     socket.on('disconnect', function() {
         console.log('Disconnected from WebSocket');
     });
-
-    let lastClickedSAButton = null;
-    let lastActiveSAButton = null;
-
-
+ 
     socket.on('message', function(CANData) {
         // console.log('message:', CANData);
         const buttonsContainer = document.getElementById('sa-buttons-container');
         buttonsContainer.innerHTML = ''; // Clear previous buttons
+        const stopLoggingButton = document.getElementById("stop-can-logging-button");
+        const startLoggingButton = document.getElementById("start-can-logging-button");
+            
+        if (CANData.logging){    
+            stopLoggingButton.style.display = 'block';
+            startLoggingButton.style.display = 'none';
+        }
+        else {
+            stopLoggingButton.style.display = 'none';
+            startLoggingButton.style.display = 'block';
+        }
 
-        for (const sa in CANData.Source) {
-            if (CANData.Source.hasOwnProperty(sa)) {
-                const item = CANData.Source[sa];
+        for (const sa in CANData.can0.source) {
+            if (CANData.can0.source.hasOwnProperty(sa)) {
+                const item = CANData.can0.source[sa];
                 const button = document.createElement('button');
                 button.textContent = sa + ": " + item.name + " (" + item.count + ")";
                 button.setAttribute('data-key', sa);
@@ -165,6 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     button.classList.add('active');
                     lastActiveSAButton = button;
                     lastClickedSAButton = button;
+                    clear_table_values();
                     displayPGN(item);
                 });
                 // Append the button to the buttons container
@@ -189,31 +308,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     //initialize the menu.
-    fetchTables({})
-    // const live = document.getElementById('data-table-live');
-    // live.setAttribute('selected','selected')
+    fetchTables()
+
+    // Set the initial container height
+    setContainerHeight();
+
+    // Adjust the height on window resize
+    window.addEventListener('resize', setContainerHeight);
+        
+
 });
 
-function fetchTables(tables) {
-    const downloadsContainer = document.getElementById('downloads-container');
-    downloadsContainer.innerHTML = ''; // Clear existing links
 
-    // Use Object.entries() to get key-value pairs and iterate over them
-    for (const [key, value] of Object.entries(tables)) {
-        const link = document.createElement('a');
-        link.href = `/api/download?table_name=${key}`; // Assuming your download endpoint uses this query parameter
-        link.textContent = `${key} (${value})`;
-        // link.download = key; // This attribute suggests the browser to download the resource
-        downloadsContainer.appendChild(link);
-        const linebreak = document.createElement('br');
-        downloadsContainer.appendChild(linebreak);   
-    }
-}
-function setBitrate(event) {
+
+async function setBitrate(event) {
     event.preventDefault(); // Prevent the form from submitting normally
-    var bitrate = document.getElementById("bitrate-select").value;
-    if (bitrate) {
-        fetch('/api/start_can', {
+    const bitrate = document.getElementById("bitrate-select").value;
+    if (bitrate){
+        console.log("Starting CAN at " + bitrate);
+        await fetch('/api/start_can', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -230,30 +343,150 @@ function setBitrate(event) {
         })
         .then(data => {
             console.log(data);
-            if (data.status === "success") {
-                // alert("Bitrate set successfully!");
-                const stopButton = document.getElementById('can-control-button')
-                stopButton.removeAttribute('disabled'); // Use removeAttribute for enabling the button
+            if (data.message.status === "success") {
+                isCanRunning = true;    
             } else {
                 const errorMessage = typeof data.message === 'string' ? data.message : JSON.stringify(data.message);
                 alert("Error: " + errorMessage);
             }
         })
         .catch(error => alert("An error occurred: " + error));
-    } else {
-        alert("Please select a bitrate.");
     }
 }
-document.addEventListener("DOMContentLoaded", () => {
-    const bitrateSelect = document.getElementById("bitrate-select");
-    bitrateSelect.addEventListener("change", setBitrate);
-});
 
+async function stopCAN() {
+    console.log("Stopping CAN.");
+    try {
+        const response = await fetch('/api/stop_can', {
+            method: 'GET',
+        });
+        if (response.ok) {
+            console.log("Stopped CAN")
+        }
+        else {
+            console.error('Failed to stop CAN:', response.statusText);
+        }
+    } catch (error) {
+        console.error('Error occurred while stopping CAN:', error);
+    }
+}
 
+async function startLogging() {
+    try {
+        const response = await fetch('start_logging', {
+            method: 'GET',
+        });
+        if (response.ok) {
+            console.log((await response.json()).status)
+        }
+        else {
+            console.error('Failed to Start Logging CAN:', response.statusText);
+        }
+    } catch (error) {
+        console.error('Error occurred while starting logging:', error);
+    }
+}
+
+async function stopLogging() {
+    try {
+        const response = await fetch('stop_logging', {
+            method: 'GET',
+        });
+        if (response.ok) {
+            console.log((await response.json()).status)
+            
+        }
+        else {
+            console.error('Failed to Start Logging CAN:', response.statusText);
+        }
+    } catch (error) {
+        console.error('Error occurred while stopping logging:', error);
+    }
+}
+
+async function fetchTables() {
+    const response = await fetch('/api/tables', {
+            method: 'GET',
+        });
+        if (response.ok) {
+            console.log((await response.json()))
+        }
+        else {
+            console.error('Failed to Fetch Database Tables:', response.statusText);
+        }
+    const downloadsContainer = document.getElementById('downloads-container');
+    // downloadsContainer.innerHTML = ''; // Clear existing links
+
+    // // Use Object.entries() to get key-value pairs and iterate over them
+    // for (const [key, value] of Object.entries(tables)) {
+    //     const link = document.createElement('a');
+    //     link.href = `/api/download?table_name=${key}`; // Assuming your download endpoint uses this query parameter
+    //     link.textContent = `${key} (${value})`;
+    //     // link.download = key; // This attribute suggests the browser to download the resource
+    //     downloadsContainer.appendChild(link);
+    //     const linebreak = document.createElement('br');
+    //     downloadsContainer.appendChild(linebreak);   
+    // }
+}
+
+// async function downloadCSV(){
+//     console.log("Downloading CSV.");
+//     const tableName = 'can_data'; // specify the table name
+//     const queryParams = new URLSearchParams({ table_name: tableName }).toString();
+//     const url = `/api/download?${queryParams}`;
+    
+//     try {
+//         const response = await fetch(url, {
+//             method: 'GET',
+//         });
+
+//         if (response.ok) {
+//             const blob = await response.blob();
+//             const blobUrl = window.URL.createObjectURL(blob);
+//             window.open(blobUrl); // Open the CSV file in a new tab/window
+//         } else {
+//             console.error('Failed to Fetch Database Tables:', response.statusText);
+//         }
+//         } catch (error) {
+//             console.error('Error occurred while downloading CSV:', error);
+//         }
+//     }
+
+// document.getElementById('download-csv-button').addEventListener('click', downloadCSV);
+// // }
 
 function selectTable(event) {
 
 }
+
+function renameTable(){
+    
+}
+
+function confirmDelete(tableName) {
+    const confirmed = confirm(`Do you want to delete ${tableName}?`);
+
+    if (confirmed && tableName) {
+        console.log(`Requesting to delete ${tableName}`)
+        fetch('/api/delete_table', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ table_name: tableName }),
+                })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Table contents deleted successfully.');
+            } else {
+                console.log('Failed to delete table contents: ' + data.error);
+            }
+        })
+        .catch(error => console.log("An error occurred: " + error));
+    } 
+}
+
 function displayMessages(messages) {
     const container = document.getElementById('can-data-container');
     container.innerHTML = ''; // Clear previous data
@@ -265,31 +498,10 @@ function displayMessages(messages) {
     });
 }
 
-function renameTable(){
-    
-}
-function deleteTable(tableName) {
-    const confirmed = confirm(`Do you want to delete ${tableName}?`);
-
-    if (confirmed && tableName) {
-        fetch(`/api/delete_table?table_name=${tableName}`, {
-            method: 'GET',
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert("Error: " + data.error);
-            } else {
-                alert(data.message);
-                fetchTables(); // Refresh the table list
-            }
-        })
-        .catch(error => alert("An error occurred: " + error));
-    } 
-}
-
 let lastClickedPGNButton = null; 
+
 function displayPGN(item) {
+    // console.log("Display PGN")
     // console.log(item);
     const dataContainer = document.getElementById('pgn-container');
     dataContainer.innerHTML = ''; // Clear previous data
@@ -314,6 +526,8 @@ function displayPGN(item) {
                     if (lastClickedPGNButton) {
                         lastClickedPGNButton.classList.remove('active');
                     }
+                    // const tableBody = document.querySelector("#data-table tbody");
+                    clear_table_values();
                     button.classList.add('active');
                     lastClickedPGNButton = button;
                     displayData(values);
@@ -332,55 +546,97 @@ function displayPGN(item) {
     dataContainer.appendChild(pgnDiv);
 }
 
-function displayData(item) {
-    // console.log(item);
-    const dataContainer = document.getElementById('can-data-container');
-    dataContainer.innerHTML = 'CAN Data'; // Clear previous data
-
-    const dataDiv = document.createElement('div');
-    dataDiv.className = 'canData';
-    dataDiv.textContent = item.data;
-
-    // // Append the item div to the data container
-    dataContainer.appendChild(dataDiv);
+function convertHexToDecimal(hexString) {
+        return hexString.split(' ').map(hex => parseInt(hex, 16));
 }
-async function stopCAN() {
-    try {
-        const response = await fetch('/api/stop_can', {
-            method: 'GET',
-        });
 
-        if (response.ok) {
-            const stopButton = document.getElementById('can-control-button');
-            stopButton.removeAttribute('disabled'); // Use removeAttribute for enabling the button
-            
-            // Select the "Start CAN" option
-            const startCanOption = document.getElementById('start-can-option');
-            startCanOption.selected = true;
+function formatHex(value) {
+    return value.toString(16).toUpperCase().padStart(2, '0');
+}
+
+
+function interpolateColor(value, min, max) {
+        const mid = (min + max) / 2;
+        let startColor, endColor, ratio;
+
+        if (value <= mid) {
+            startColor = { r: 139, g: 0, b: 0 };  // Dark Red
+            endColor = { r: 0, g: 100, b: 0 };    // Dark Green
+            ratio = (value - min) / (mid - min);
         } else {
-            console.error('Failed to stop CAN:', response.statusText);
-            alert('Failed to stop CAN');
+            startColor = { r: 0, g: 100, b: 0 };  // Dark Green
+            endColor = { r: 0, g: 0, b: 139 };    // Dark Blue
+            ratio = (value - mid) / (max - mid);
         }
-    } catch (error) {
-        console.error('Error occurred while stopping CAN:', error);
-        alert('An error occurred while stopping CAN');
+
+        const r = Math.round(startColor.r + ratio * (endColor.r - startColor.r));
+        const g = Math.round(startColor.g + ratio * (endColor.g - startColor.g));
+        const b = Math.round(startColor.b + ratio * (endColor.b - startColor.b));
+
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+
+function setContainerHeight() {
+        const tableContainer = document.getElementById('table-container');
+        const containerHeight = tableContainer.parentElement.clientHeight;
+        tableContainer.style.height = `${containerHeight}px`;
+    }
+
+function appendDataToTable(data) {
+     
+    //const tableBody = document.querySelector("#data-table tbody");
+
+    const hexData = convertHexToDecimal(data.data);
+
+    const dataLength = hexData.length;
+
+    for (let i = 0; i < dataLength; i++) {
+        const valCell = document.getElementById(`b${i}_val`);
+        const stdCell = document.getElementById(`b${i}_std`);
+
+        if (valCell) {
+            valCell.textContent = formatHex(hexData[i]);
+            valCell.style.backgroundColor = interpolateColor(hexData[i],0,255);
+        }
+
+        if (stdCell) {
+            const std = calculateStandardDeviation(data.sums[i], data.sumsquared[i], data.count);
+            stdCell.textContent = std.toFixed(2);
+            stdCell.style.backgroundColor = interpolateColor(std,0,100);
+        }
     }
 }
-async function startLogging() {
-    try {
-        const response = await fetch('start_logging', {
-            method: 'POST',
-        });
 
-        if (response.ok) {
-            
-        } else {
-            console.error('Failed to start logging:', response.statusText);
+function displayData(values){
+    //console.log(values)
+    //const canContainer = document.getElementById('can-data-container');
+    appendDataToTable(values);
+}
+
+function clear_table_values() {
+    for (let i = 0; i <= 7; i++) {
+        const dataCell = document.getElementById(`b${i}_val`);
+        if (dataCell) {
+            dataCell.innerHTML = "";
+            dataCell.style.backgroundColor = 'black'
         }
-    } catch (error) {
-        console.error('Error occurred while starting logging:', error);
+
+        const stdCell = document.getElementById(`b${i}_std`);
+        if (stdCell) {
+            stdCell.innerHTML = "";
+            stdCell.style.backgroundColor = 'black'
+        }
     }
 }
+
+function calculateStandardDeviation(sum, sumsquared, count) {
+        if (count <= 1) return 0;
+        const mean = sum / count;
+        const variance = (sumsquared / count) - (mean * mean);
+        return Math.sqrt(variance * count / (count - 1));
+}
+
 </script>
 
 {% endblock %}

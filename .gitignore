@@ -2,3 +2,4 @@
 HMI/WebInterface/can_messages.db
 HMI/WebInterface/can_messages.db
 PipeLevelIndicatorWithWifiUDP/arduino_secrets.h
+HMI/can_messages.db

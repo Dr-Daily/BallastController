@@ -37,7 +37,27 @@
             document.getElementById('CANbitrate').innerText = data.CANbitrate;
             document.getElementById('CANstate').innerText = data.CANstate;
             document.getElementById('CANRXbytes').innerText = data.CANRXbytes
+
+            const bitrateSelect = document.getElementById("bitrate-select");
+            if (bitrateSelect){
+                const startCanOption = document.getElementById("start-can-option");
+                const stopCanOption = document.getElementById("stop-can-option");
+                const stopCanButton = document.getElementById("can-stop-button");
+                if (data.CANstate==="ACTIVE"){
+                    
+                    stopCanButton.style.display = 'block';
+                    bitrateSelect.style.display = 'none';
+                    stopCanOption.selected = true;
+                    
+                }
+                else {
+                    bitrateSelect.style.display = 'block';
+                    stopCanButton.style.display = 'none';
+                    startCanOption.selected = true; // Select "Start CAN" option
+                }
+            }
         }
+            
 
         updateTime();
         setInterval(updateTime, 1000);
@@ -61,7 +81,6 @@
         border: 0px;
         font-size: 50px;
         cursor: pointer;
-        margin: 1; /* Remove margin from the refresh button */
         width: 100%;
     }
     .footer-button:hover {

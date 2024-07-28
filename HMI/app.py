@@ -30,7 +30,122 @@ socketio = SocketIO(app,async_mode='threading', cors_allowed_origins="*")
 # If that's not enough, run
 # journalctl -r 
 # to get the tail end of the system journal
-
+# Taken from the Global Source Addresses (B2) tab of the J1939DA_Feb24
+j1939_SA={
+0	:{'name':"Engine #1"},
+1	:{'name':"Engine #2"},
+2	:{'name':"Turbocharger"},
+3	:{'name':"Transmission #1"},
+4	:{'name':"Transmission #2"},
+5	:{'name':"Shift Console - Primary"},
+6	:{'name':"Shift Console - Secondary"},
+7	:{'name':"Power TakeOff - (Main or Rear)"},
+8	:{'name':"Axle - Steering"},
+9	:{'name':"Axle - Drive #1"},
+10	:{'name':"Axle - Drive #2"},
+11	:{'name':"Brakes - System Controller"},
+12	:{'name':"Brakes - Steer Axle"},
+13	:{'name':"Brakes - Drive axle #1"},
+14	:{'name':"Brakes - Drive Axle #2"},
+15	:{'name':"Retarder - Engine"},
+16	:{'name':"Retarder - Driveline"},
+17	:{'name':"Cruise Control"},
+18	:{'name':"Fuel System"},
+19	:{'name':"Steering Controller"},
+20	:{'name':"Suspension - Steer Axle"},
+21	:{'name':"Suspension - Drive Axle #1"},
+22	:{'name':"Suspension - Drive Axle #2"},
+23	:{'name':"Instrument Cluster #1"},
+24	:{'name':"Trip Recorder"},
+25	:{'name':"Passenger-Operator Climate Control #1"},
+26	:{'name':"Alternator/Electrical Charging System"},
+27	:{'name':"Aerodynamic Control"},
+28	:{'name':"Vehicle Navigation"},
+29	:{'name':"Vehicle Security"},
+30	:{'name':"Electrical System"},
+31	:{'name':"Starter System"},
+32	:{'name':"Tractor-Trailer Bridge #1"},
+33	:{'name':"Body Controller"},
+34	:{'name':"Auxiliary Valve Control or Engine Air System Valve Control"},
+35	:{'name':"Hitch Control"},
+36	:{'name':"Power TakeOff (Front or Secondary)"},
+37	:{'name':"Off Vehicle Gateway"},
+38	:{'name':"Virtual Terminal (in cab)"},
+39	:{'name':"Management Computer #1"},
+40	:{'name':"Cab Display #1"},
+41	:{'name':"Retarder, Exhaust, Engine #1"},
+42	:{'name':"Headway Controller"},
+43	:{'name':"On-Board Diagnostic Unit"},
+44	:{'name':"Retarder, Exhaust, Engine #2"},
+45	:{'name':"Endurance Braking System"},
+46	:{'name':"Hydraulic Pump Controller"},
+47	:{'name':"Suspension - System Controller #1"},
+48	:{'name':"Pneumatic - System Controller"},
+49	:{'name':"Cab Controller - Primary"},
+50	:{'name':"Cab Controller - Secondary"},
+51	:{'name':"Tire Pressure Controller"},
+52	:{'name':"Ignition Control Module #1"},
+53	:{'name':"Ignition Control Module #2"},
+54	:{'name':"Seat Control #1"},
+55	:{'name':"Lighting - Operator Controls"},
+56	:{'name':"Rear Axle Steering Controller #1"},
+57	:{'name':"Water Pump Controller"},
+58	:{'name':"Passenger-Operator Climate Control #2"},
+59	:{'name':"Transmission Display - Primary"},
+60	:{'name':"Transmission Display - Secondary"},
+61	:{'name':"Exhaust Emission Controller"},
+62	:{'name':"Vehicle Dynamic Stability Controller"},
+63	:{'name':"Oil Sensor"},
+64	:{'name':"Suspension - System Controller #2"},
+65	:{'name':"Information System Controller #1"},
+66	:{'name':"Ramp Control"},
+67	:{'name':"Clutch/Converter Unit"},
+68	:{'name':"Auxiliary Heater #1"},
+69	:{'name':"Auxiliary Heater #2"},
+70	:{'name':"Engine Valve Controller"},
+71	:{'name':"Chassis Controller #1"},
+72	:{'name':"Chassis Controller #2"},
+73	:{'name':"Propulsion Battery Charger"},
+74	:{'name':"Communications Unit, Cellular"},
+75	:{'name':"Communications Unit, Satellite"},
+76	:{'name':"Communications Unit, Radio"},
+77	:{'name':"Steering Column Unit"},
+78	:{'name':"Fan Drive Controller"},
+79	:{'name':"Seat Control #2"},
+80	:{'name':"Parking Brake Controller"},
+81	:{'name':"Aftertreatment #1 system gas intake"},
+82	:{'name':"Aftertreatment #1 system gas outlet"},
+83	:{'name':"Safety Restraint System"},
+84	:{'name':"Cab Display #2"},
+85	:{'name':"Diesel Particulate Filter Controller"},
+86	:{'name':"Aftertreatment #2 system gas intake"},
+87	:{'name':"Aftertreatment #2 system gas outlet"},
+88	:{'name':"Safety Restraint System #2"},
+89	:{'name':"Atmospheric Sensor"},
+90	:{'name':"Powertrain Control Module"},
+91	:{'name':"Power Systems Manager"},
+92	:{'name':"Engine Injection Control Module"},
+93	:{'name':"Fire Protection System"},
+94	:{'name':"Driver Impairment Device"},
+95	:{'name':"Supply Equipment Communication Controller (SECC)"},
+96	:{'name':"Vehicle Adapter Communication Controller (VACC)"},
+97	:{'name':"Fuel Cell System"},
+241 :{'name':"Radio Interface"},
+248	:{'name':"File Server / Printer"},
+249	:{'name':"Off Board Diagnostic-Service Tool #1"},
+250	:{'name':"Off Board Diagnostic-Service Tool #2"},
+251	:{'name':"On-Board Data Logger"},
+252	:{'name':"Reserved for Experimental Use"},
+253	:{'name':"Reserved for OEM"},
+254	:{'name':"Null Address"},
+255	:{'name':"GLOBAL"}
+}
+def get_sa_name(sa):
+    try:
+        return j1939_SA[sa]['name']
+    except KeyError:
+        return "Unknown"
+    
 # Define the queues
 raw_data_queue = queue.Queue()
 processed_data_queue = queue.Queue()
@@ -131,6 +246,7 @@ def unpack_CAN(can_packet):
 def process_data():
     
     sa_data = {"Source":{}}
+    start_time = time.time()
     while True:
         while not raw_data_queue.empty():
             (interface, sa, pgn, can_time, da, can_id_string, can_data_string, can_data) = raw_data_queue.get()
@@ -138,33 +254,44 @@ def process_data():
         
             try:
                 summary_data[interface]["source"][sa]['count'] += 1
-                sa_data["Source"][sa]['count'] += 1
             except KeyError:
-                summary_data[interface]["source"][sa] = {'count': 1, 'address': sa, 'pgns': {}}
-                sa_data["Source"][sa] = {'count': 1, 'address': sa, 'pgns': {}}
+                summary_data[interface]["source"][sa] = {'count': 1, 'address': sa, 'name': get_sa_name(sa), 'pgns': {}}
             try:
                 summary_data[interface]["source"][sa]['pgns'][pgn]['count'] += 1
             except KeyError:
                 summary_data[interface]["source"][sa]['pgns'][pgn] = {'count': 1,'sums':[0,0,0,0,0,0,0,0],'sumsquared':[0,0,0,0,0,0,0,0] }
                 
+            try:
+                summary_data[interface]["source"][sa]['pgns'][pgn]['time_delta'] = "{:d}ms".format(
+                    int((can_time - summary_data[interface]["source"][sa]['pgns'][pgn]['time']) * 1000))
+            except KeyError:
+                summary_data[interface]["source"][sa]['pgns'][pgn]['time_delta'] = "-1ms"
+
             summary_data[interface]["source"][sa]['pgns'][pgn]['time'] = can_time
             summary_data[interface]["source"][sa]['pgns'][pgn]['id'] = can_id_string
             summary_data[interface]["source"][sa]['pgns'][pgn]['da'] = da
             summary_data[interface]["source"][sa]['pgns'][pgn]['data'] = can_data_string
-            summary_data[interface]["source"][sa]['pgns'][pgn]['time_delta'] = "{:d}ms".format(
-                    int((can_time - summary_data[interface]["source"][sa]['pgns'][pgn]['time']) * 1000))
+            
             for i in range(len(can_data)):
                 summary_data[interface]["source"][sa]['pgns'][pgn]['sums'][i] += can_data[i]
                 summary_data[interface]["source"][sa]['pgns'][pgn]['sumsquared'][i] += can_data[i]**2
             
-        socketio.emit('message', sa_data)  # Emit processed data to the WebSocket
-        time.sleep(STATS_UPDATE_PERIOD)
+            if logging_active.is_set():
+                summary_data['logging'] = True
+            else:
+                summary_data['logging'] = False
+
+            if (can_time - start_time) > STATS_UPDATE_PERIOD:
+                start_time = can_time
+                socketio.emit('message', summary_data)  # Emit processed data to the WebSocket
+                #logger.debug(f"emitted message: {summary_data}")
+        time.sleep(.005)
 
 def socket_can_data(interface):
     while True:
         data = get_can_stats(interface)
         socketio.emit('can_stats', data)  # Emit processed data to the WebSocket
-        logger.debug(f"emitted can_stats: {data}")
+        #logger.debug(f"emitted can_stats: {data}")
         time.sleep(1.09)
 
 def write_to_db(table_name):
@@ -187,10 +314,10 @@ def write_to_db(table_name):
     table_data = []
     while True:
         while not processed_data_queue.empty():
-            data = processed_data_queue.get() 
-        if logging_active.is_set():  # check to see if logging is active    
             #data = (interface, sa, pgn, can_time, da, can_id, can_data_string, can_data)
+            data = processed_data_queue.get() 
             table_data.append(data)
+        if logging_active.is_set():  # check to see if logging is active    
             try:
                 cursor.execute('BEGIN;')
                 for item in table_data:
@@ -241,7 +368,31 @@ def get_db():
 
 @app.route('/api/tables', methods=['GET'])
 def get_tables():
-    return
+    # Connect to the SQLite database
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    # Execute the query to get the list of tables
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    
+    # Fetch all results
+    tables = cursor.fetchall()
+    
+    non_zero_tables = {}
+    
+    # Check the row count of each table
+    for table in tables:
+        table_name = table[0]
+        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+        count = cursor.fetchone()[0]
+        if count > 0:
+            non_zero_tables[table_name] = count
+    
+    # Close the connection
+    conn.close()
+    
+    return jsonify(non_zero_tables)
+    
         
 def is_valid_hex(can_id):
     # Check if the string contains only valid hex characters
@@ -279,10 +430,15 @@ def get_messages():
         cursor.close()
         conn.close()
 
-@app.route('/api/delete_table', methods=['GET'])
+@app.route('/api/delete_table', methods=['POST'])
 def delete_table():
-    
-    table_name = request.args.get('table_name')
+    logger.info("Delete table data has been requested.")
+    post_data = request.get_json()
+    logger.info(post_data)
+    try:
+        table_name = post_data['table_name']
+    except KeyError as e:
+        return jsonify({"error": "table_name key was not in the post data."}), 400
     
     if not table_name:
         return jsonify({"error": "table_name parameter is required"}), 400
@@ -292,24 +448,31 @@ def delete_table():
         conn = get_db()
         cursor = conn.cursor()
     
-        query = f"DROP TABLE {table_name}"
+        query = f"DELETE FROM {table_name}"
         cursor.execute(query)
         conn.commit()
-        return jsonify({"message": f"Table {table_name} deleted successfully"}), 200
+        cursor.execute("VACUUM")
+        conn.commit()
+        
     except sqlite3.Error as e:
-        return jsonify({"error": str(e)}), 500    
+        return jsonify({"success":False, "error": str(e)}), 500    
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"success":False, 'error': str(e)}), 500
     finally:
         cursor.close()
         conn.close()
+    logger.info(f"Table {table_name} deleted successfully")
+    return jsonify({"success":True, "message": f"Table {table_name} deleted successfully"}), 200
 
+@app.route('/api/download_db', methods=['POST'])
+def download_db():
+    return send_file(DATABASE, 
+                     as_attachment=True,
+                     download_name=f'{DATABASE}')
 
-@app.route('/api/download', methods=['GET'])
+@app.route('/api/download', methods=['POST'])
 def download_table():
-    
-    table_name = request.args.get('table_name')
-    
+    table_name = request.form['table_name']
     if not table_name:
         return jsonify({"error": "table_name parameter is required"}), 400
     
@@ -333,7 +496,7 @@ def download_table():
 
         # Set the CSV file's pointer to the beginning
         output.seek(0)
-
+        logger.debug(f"Returning {table_name}.csv")
         # Serve the CSV file
         return send_file(
             io.BytesIO(output.getvalue().encode()),
@@ -343,8 +506,10 @@ def download_table():
         )
     
     except sqlite3.Error as e:
+        logger.warning(str(e))
         return jsonify({"error": str(e)}), 500    
     except Exception as e:
+        logger.warning(str(e))
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
@@ -452,12 +617,12 @@ def system_shutdown():
     except Exception as e:
         return jsonify({"status": "error", "output": str(e)})
 
-@app.route('/start_logging', methods=['POST'])
+@app.route('/start_logging', methods=['GET'])
 def start_logging():
     logging_active.set()
     return jsonify({"status": "Logging started"}), 200
 
-@app.route('/stop_logging', methods=['POST'])
+@app.route('/stop_logging', methods=['GET'])
 def stop_logging():
     logging_active.clear()
     return jsonify({"status": "Logging stopped"}), 200

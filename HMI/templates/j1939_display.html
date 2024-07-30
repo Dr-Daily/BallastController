@@ -72,10 +72,26 @@
         justify-content: left;
     }
     .pgn-button{
-        font-size: 48pt;
+        font-size: 40pt;
         background-color: rgb(72, 5, 76);
         color: white;
         width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0pt;
+        margin-bottom: -1lh;
+        /* box-sizing: border-box; */
+        
+    }
+    .pgn-button input[type="checkbox"] {
+        transform: scale(4); /* Scale the checkbox to make it bigger */
+        margin-left: 20px;
+        margin-right: 20px;
+    }
+    .pgn-button label {
+        flex-grow: 1;
+        text-align: left;
     }
     .pgn-button.active {
             background-color: #f004d5; /* Green background for the active button */
@@ -91,6 +107,7 @@
         grid-template-rows: auto auto 1fr;
         grid-template-columns: 1fr;
         justify-content: left; 
+        padding: 0;
     }
     .database-table-option {
         font-size: 36pt;
@@ -517,10 +534,22 @@ function displayPGN(item) {
     for (const pgn in item.pgns) {
             if (item.pgns.hasOwnProperty(pgn)) {
                 const values = item.pgns[pgn];
+                
                 const button = document.createElement('button');
-                button.textContent = pgn + " (" + values.id + ") " + values.time_delta + " [" + values.count + "]";
-                button.setAttribute('data-key', pgn);
                 button.setAttribute('class','pgn-button')
+                button.setAttribute('data-key', pgn);
+
+                const label = document.createElement('label');
+                label.setAttribute('for', `checkbox_${pgn}`);
+                label.textContent = `${pgn} (${values.id}) ${values.time_delta} [${values.count}]`;
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `checkbox_${pgn}`;
+                
+                button.appendChild(label);
+                button.appendChild(checkbox);
+                
                 button.addEventListener('click', function() {
                     // Latch the last clicked button
                     if (lastClickedPGNButton) {

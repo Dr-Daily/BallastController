@@ -37,105 +37,107 @@ j1939_SA={
 2	:{'name':"Turbocharger"},
 3	:{'name':"Transmission #1"},
 4	:{'name':"Transmission #2"},
-5	:{'name':"Shift Console - Primary"},
-6	:{'name':"Shift Console - Secondary"},
-7	:{'name':"Power TakeOff - (Main or Rear)"},
-8	:{'name':"Axle - Steering"},
-9	:{'name':"Axle - Drive #1"},
-10	:{'name':"Axle - Drive #2"},
-11	:{'name':"Brakes - System Controller"},
-12	:{'name':"Brakes - Steer Axle"},
-13	:{'name':"Brakes - Drive axle #1"},
-14	:{'name':"Brakes - Drive Axle #2"},
-15	:{'name':"Retarder - Engine"},
-16	:{'name':"Retarder - Driveline"},
+5	:{'name':"Shift Console #1"},
+6	:{'name':"Shift Console #2"},
+7	:{'name':"Power TakeOff"},
+8	:{'name':"Axle-Steering"},
+9	:{'name':"Axle-Drive #1"},
+10	:{'name':"Axle-Drive #2"},
+11	:{'name':"Brake Controller"},
+12	:{'name':"Brakes-Steer"},
+13	:{'name':"Brakes-Drive #1"},
+14	:{'name':"Brakes-Drive #2"},
+15	:{'name':"Retarder-Engine"},
+16	:{'name':"Retarder-Driveline"},
 17	:{'name':"Cruise Control"},
 18	:{'name':"Fuel System"},
 19	:{'name':"Steering Controller"},
-20	:{'name':"Suspension - Steer Axle"},
-21	:{'name':"Suspension - Drive Axle #1"},
-22	:{'name':"Suspension - Drive Axle #2"},
-23	:{'name':"Instrument Cluster #1"},
+20	:{'name':"Suspension-Steer"},
+21	:{'name':"Suspension-Drive #1"},
+22	:{'name':"Suspension-Drive#2"},
+23	:{'name':"Inst. Cluster"},
 24	:{'name':"Trip Recorder"},
-25	:{'name':"Passenger-Operator Climate Control #1"},
-26	:{'name':"Alternator/Electrical Charging System"},
+25	:{'name':"Climate Control #1"},
+26	:{'name':"Alternator"},
 27	:{'name':"Aerodynamic Control"},
-28	:{'name':"Vehicle Navigation"},
-29	:{'name':"Vehicle Security"},
+28	:{'name':"Navigation"},
+29	:{'name':"Security"},
 30	:{'name':"Electrical System"},
 31	:{'name':"Starter System"},
-32	:{'name':"Tractor-Trailer Bridge #1"},
+32	:{'name':"Trailer Bridge #1"},
 33	:{'name':"Body Controller"},
-34	:{'name':"Auxiliary Valve Control or Engine Air System Valve Control"},
+34	:{'name':"Aux. Valve Control"},
 35	:{'name':"Hitch Control"},
-36	:{'name':"Power TakeOff (Front or Secondary)"},
+36	:{'name':"PTO2 2"},
 37	:{'name':"Off Vehicle Gateway"},
-38	:{'name':"Virtual Terminal (in cab)"},
-39	:{'name':"Management Computer #1"},
+38	:{'name':"Virtual Terminal"},
+39	:{'name':"Mgt. Computer #1"},
 40	:{'name':"Cab Display #1"},
-41	:{'name':"Retarder, Exhaust, Engine #1"},
+41	:{'name':"Exhaust Retarder 1"},
 42	:{'name':"Headway Controller"},
-43	:{'name':"On-Board Diagnostic Unit"},
-44	:{'name':"Retarder, Exhaust, Engine #2"},
-45	:{'name':"Endurance Braking System"},
-46	:{'name':"Hydraulic Pump Controller"},
-47	:{'name':"Suspension - System Controller #1"},
-48	:{'name':"Pneumatic - System Controller"},
-49	:{'name':"Cab Controller - Primary"},
-50	:{'name':"Cab Controller - Secondary"},
-51	:{'name':"Tire Pressure Controller"},
-52	:{'name':"Ignition Control Module #1"},
-53	:{'name':"Ignition Control Module #2"},
+43	:{'name':"On-Board Diagnostic"},
+44	:{'name':"Exhaust Retarder 2"},
+45	:{'name':"Endurance Braking"},
+46	:{'name':"Hydraulic Pump"},
+47	:{'name':"Suspension 1"},
+48	:{'name':"Pneumatics"},
+49	:{'name':"Cab Controller 1"},
+50	:{'name':"Cab Controller 2"},
+51	:{'name':"Tire Pressure"},
+52	:{'name':"Ignition Ctrl 1"},
+53	:{'name':"Ignition Ctrl 2"},
 54	:{'name':"Seat Control #1"},
-55	:{'name':"Lighting - Operator Controls"},
-56	:{'name':"Rear Axle Steering Controller #1"},
-57	:{'name':"Water Pump Controller"},
-58	:{'name':"Passenger-Operator Climate Control #2"},
-59	:{'name':"Transmission Display - Primary"},
-60	:{'name':"Transmission Display - Secondary"},
-61	:{'name':"Exhaust Emission Controller"},
-62	:{'name':"Vehicle Dynamic Stability Controller"},
+55	:{'name':"Lighting Ctrl"},
+56	:{'name':"Rear Steering "},
+57	:{'name':"Water Pump"},
+58	:{'name':"Climate Control 2"},
+59	:{'name':"Trans. Display 1"},
+60	:{'name':"Trans. Display 2"},
+61	:{'name':"Emission Ctrl."},
+62	:{'name':"Dynamic Stability"},
 63	:{'name':"Oil Sensor"},
-64	:{'name':"Suspension - System Controller #2"},
-65	:{'name':"Information System Controller #1"},
+64	:{'name':"Suspension 2"},
+65	:{'name':"Info. Ctrl 1"},
 66	:{'name':"Ramp Control"},
-67	:{'name':"Clutch/Converter Unit"},
-68	:{'name':"Auxiliary Heater #1"},
-69	:{'name':"Auxiliary Heater #2"},
-70	:{'name':"Engine Valve Controller"},
-71	:{'name':"Chassis Controller #1"},
-72	:{'name':"Chassis Controller #2"},
-73	:{'name':"Propulsion Battery Charger"},
-74	:{'name':"Communications Unit, Cellular"},
-75	:{'name':"Communications Unit, Satellite"},
-76	:{'name':"Communications Unit, Radio"},
-77	:{'name':"Steering Column Unit"},
-78	:{'name':"Fan Drive Controller"},
+67	:{'name':"Clutch/Converter"},
+68	:{'name':"Aux. Heater #1"},
+69	:{'name':"Aux. Heater #2"},
+70	:{'name':"Engine Valver"},
+71	:{'name':"Chassis Ctrl #1"},
+72	:{'name':"Chassis Ctrl #2"},
+73	:{'name':"Battery Charger"},
+74	:{'name':"Comms, Cellular"},
+75	:{'name':"Comms, Satellite"},
+76	:{'name':"Comms, Radio"},
+77	:{'name':"Steering Column"},
+78	:{'name':"Fan Drive Ctrl"},
 79	:{'name':"Seat Control #2"},
-80	:{'name':"Parking Brake Controller"},
-81	:{'name':"Aftertreatment #1 system gas intake"},
-82	:{'name':"Aftertreatment #1 system gas outlet"},
-83	:{'name':"Safety Restraint System"},
+80	:{'name':"Parking Brake Ctrl"},
+81	:{'name':"Aftertreatment #1 in"},
+82	:{'name':"Aftertreatment #1 out"},
+83	:{'name':"Safety Restraint 1"},
 84	:{'name':"Cab Display #2"},
-85	:{'name':"Diesel Particulate Filter Controller"},
-86	:{'name':"Aftertreatment #2 system gas intake"},
-87	:{'name':"Aftertreatment #2 system gas outlet"},
-88	:{'name':"Safety Restraint System #2"},
+85	:{'name':"DPF Controller"},
+86	:{'name':"Aftertreatment #2 in"},
+87	:{'name':"Aftertreatment #2 out"},
+88	:{'name':"Safety Restraint 2"},
 89	:{'name':"Atmospheric Sensor"},
-90	:{'name':"Powertrain Control Module"},
-91	:{'name':"Power Systems Manager"},
-92	:{'name':"Engine Injection Control Module"},
-93	:{'name':"Fire Protection System"},
-94	:{'name':"Driver Impairment Device"},
-95	:{'name':"Supply Equipment Communication Controller (SECC)"},
-96	:{'name':"Vehicle Adapter Communication Controller (VACC)"},
+90	:{'name':"Powertrain Control"},
+91	:{'name':"Power Manager"},
+92	:{'name':"Engine Injection"},
+93	:{'name':"Fire Protection"},
+94	:{'name':"Driver Impairment"},
+95	:{'name':"Supply Eq. Comms."},
+96	:{'name':"Vehicle Comms."},
 97	:{'name':"Fuel Cell System"},
+129 :{'name':"Depth Sensor"},
 241 :{'name':"Radio Interface"},
-248	:{'name':"File Server / Printer"},
-249	:{'name':"Off Board Diagnostic-Service Tool #1"},
-250	:{'name':"Off Board Diagnostic-Service Tool #2"},
-251	:{'name':"On-Board Data Logger"},
-252	:{'name':"Reserved for Experimental Use"},
+243 :{'name':"Marine Display 2"},
+248	:{'name':"File Server"},
+249	:{'name':"Service Tool #1"},
+250	:{'name':"Service Tool #2"},
+251	:{'name':"Data Logger"},
+252	:{'name':"Experimental Use"},
 253	:{'name':"Reserved for OEM"},
 254	:{'name':"Null Address"},
 255	:{'name':"GLOBAL"}
@@ -147,8 +149,8 @@ def get_sa_name(sa):
         return "Unknown"
     
 # Define the queues
-raw_data_queue = queue.Queue()
-processed_data_queue = queue.Queue()
+raw_data_queue = queue.Queue(5000)
+processed_data_queue = queue.Queue(5000)
 summary_data_queue = queue.Queue(2) # this is a holding queue for data. 
 
 # Setup CAN interfaces (adjust the settings according to your hardware)
@@ -173,6 +175,7 @@ logger = logging.getLogger()
 
 UPDATE_PERIOD = 0.91  # seconds
 STATS_UPDATE_PERIOD = 0.29
+BALLAST_UPDATE_TIME = 0.37
 
 # Struct format for CAN frame
 can_frame_format = "<lB3x8s"
@@ -244,9 +247,9 @@ def unpack_CAN(can_packet):
     return extended_frame,can_id, can_dlc, can_data, can_id_string
 
 def process_data():
-    
-    sa_data = {"Source":{}}
     start_time = time.time()
+    ballast_start_time = time.time()
+    ballast_data = {}
     while True:
         while not raw_data_queue.empty():
             (interface, sa, pgn, can_time, da, can_id_string, can_data_string, can_data) = raw_data_queue.get()
@@ -259,8 +262,7 @@ def process_data():
             try:
                 summary_data[interface]["source"][sa]['pgns'][pgn]['count'] += 1
             except KeyError:
-                summary_data[interface]["source"][sa]['pgns'][pgn] = {'count': 1,'sums':[0,0,0,0,0,0,0,0],'sumsquared':[0,0,0,0,0,0,0,0] }
-                
+                summary_data[interface]["source"][sa]['pgns'][pgn] = {'count': 1,'sums':[0,0,0,0,0,0,0,0],'sumsquared':[0,0,0,0,0,0,0,0] }  
             try:
                 summary_data[interface]["source"][sa]['pgns'][pgn]['time_delta'] = "{:d}ms".format(
                     int((can_time - summary_data[interface]["source"][sa]['pgns'][pgn]['time']) * 1000))
@@ -284,6 +286,19 @@ def process_data():
             if (can_time - start_time) > STATS_UPDATE_PERIOD:
                 start_time = can_time
                 socketio.emit('message', summary_data)  # Emit processed data to the WebSocket
+                #logger.debug(f"emitted message: {summary_data}")
+
+            # Water level indicator added to the ballast pump lead tubes.
+            if sa == 57 and pgn == 0x1F211: # Matches arduino script
+                ballast_data["center_fill"]=bool(can_data[0])
+                ballast_data["port_fill"]=bool(can_data[1])
+                ballast_data["star_fill"]=bool(can_data[2])
+
+
+            if (can_time - ballast_start_time) > BALLAST_UPDATE_TIME:
+                ballast_start_time = can_time
+                socketio.emit('ballast', ballast_data)  # Emit processed data to the WebSocket
+                ballast_data={}
                 #logger.debug(f"emitted message: {summary_data}")
         time.sleep(.005)
 
@@ -311,6 +326,7 @@ def write_to_db(table_name):
                 )
             ''')
     conn.commit()
+    cursor.close()
     table_data = []
     while True:
         while not processed_data_queue.empty():
@@ -319,6 +335,7 @@ def write_to_db(table_name):
             table_data.append(data)
         if logging_active.is_set():  # check to see if logging is active    
             try:
+                cursor = conn.cursor()
                 cursor.execute('BEGIN;')
                 for item in table_data:
                     cursor.execute(f'''
@@ -326,10 +343,15 @@ def write_to_db(table_name):
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     ''', item)
                 cursor.execute('COMMIT;')
+                cursor.close()
             except sqlite3.Error as e:
+                cursor = conn.cursor()
                 cursor.execute('ROLLBACK;')
+                cursor.close()
                 logger.warning(f"SQLite transaction error: {e}")
-            logger.debug(f"Inserted {len(table_data)} lines into the database.")
+            except Exception as e:
+                logger.warning(f"Database error: {e}")
+            #logger.debug(f"Inserted {len(table_data)} lines into the database.")
             table_data = []
         time.sleep(UPDATE_PERIOD)
         

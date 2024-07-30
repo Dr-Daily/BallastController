@@ -7,7 +7,7 @@
 
 <style>
     #table-container {
-        height: 500px; /* Adjust the height as needed */
+        /* height: 500px; Adjust the height as needed */
         overflow-y: auto;
         border: 1px solid #ccc;
     }
@@ -80,9 +80,7 @@
         align-items: center;
         justify-content: space-between;
         margin: 0pt;
-        margin-bottom: -1lh;
-        /* box-sizing: border-box; */
-        
+    
     }
     .pgn-button input[type="checkbox"] {
         transform: scale(4); /* Scale the checkbox to make it bigger */
@@ -103,11 +101,12 @@
         text-decoration: underline;
     }
     .pgn-container{
-        display: grid;
+        /* display: grid;
         grid-template-rows: auto auto 1fr;
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; */
         justify-content: left; 
         padding: 0;
+        overflow-y: auto;
     }
     .database-table-option {
         font-size: 36pt;
@@ -185,7 +184,7 @@
         <!-- Data will be dynamically displayed here -->
     </div>
     <div class="pgn-header-container">
-        PGN (CAN ID) period [count]
+        PGN   (CAN ID) period [count]
     </div>
     <div class="pgn-container" id="pgn-container">
         Buttons of PGNs with Labels
@@ -272,7 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
     socket.on('message', function(CANData) {
         // console.log('message:', CANData);
         const buttonsContainer = document.getElementById('sa-buttons-container');
-        buttonsContainer.innerHTML = ''; // Clear previous buttons
+        // buttonsContainer.innerHTML = ''; // Clear previous buttons
         const stopLoggingButton = document.getElementById("stop-can-logging-button");
         const startLoggingButton = document.getElementById("start-can-logging-button");
             
@@ -288,31 +287,38 @@ document.addEventListener("DOMContentLoaded", () => {
         for (const sa in CANData.can0.source) {
             if (CANData.can0.source.hasOwnProperty(sa)) {
                 const item = CANData.can0.source[sa];
-                const button = document.createElement('button');
-                button.textContent = sa + ": " + item.name + " (" + item.count + ")";
-                button.setAttribute('data-key', sa);
-                button.setAttribute('class','sa-button')
-                button.addEventListener('click', function() {
-                    // Latch the last clicked button
-                    if (lastClickedSAButton) {
-                        lastClickedSAButton.classList.remove('active');
+                let button = document.querySelector(`button[data-key="${sa}"]`);
+                if (button) {
+                    // Update existing button text
+                    button.textContent = sa + ": " + item.name + " [" + item.count + "]";
+                } 
+                else {
+                    const button = document.createElement('button');
+                    button.textContent = sa + ": " + item.name + " [" + item.count + "]";
+                    button.setAttribute('data-key', sa);
+                    button.setAttribute('class','sa-button')
+                    button.addEventListener('click', function() {
+                        // Latch the last clicked button
+                        if (lastClickedSAButton) {
+                            lastClickedSAButton.classList.remove('active');
+                        }
+                        button.classList.add('active');
+                        lastActiveSAButton = button;
+                        lastClickedSAButton = button;
+                        clear_table_values();
+                        clearPGN(item);
+                        displayPGN(item);
+                    });
+                    // Append the button to the buttons container
+                    buttonsContainer.appendChild(button);
+                    // Add a <br> tag after each button
+                    buttonsContainer.appendChild(document.createElement('br'));
+                    
+                    // Add if there are no active buttons, then add this one.
+                    if (lastActiveSAButton === null){
+                        lastActiveSAButton = button
                     }
-                    button.classList.add('active');
-                    lastActiveSAButton = button;
-                    lastClickedSAButton = button;
-                    clear_table_values();
-                    displayPGN(item);
-                });
-                // Append the button to the buttons container
-                buttonsContainer.appendChild(button);
-                // Add a <br> tag after each button
-                buttonsContainer.appendChild(document.createElement('br'));
-                
-                // Add if there are no active buttons, then add this one.
-                if (lastActiveSAButton === null){
-                    lastActiveSAButton = button
                 }
-
 
                 // If this is the last clicked button, ensure it remains active and display its data
                 if (lastClickedSAButton && lastClickedSAButton.getAttribute('data-key') === sa) {
@@ -517,23 +523,37 @@ function displayMessages(messages) {
 
 let lastClickedPGNButton = null; 
 
-function displayPGN(item) {
-    // console.log("Display PGN")
-    // console.log(item);
+function clearPGN(item){
     const dataContainer = document.getElementById('pgn-container');
     dataContainer.innerHTML = ''; // Clear previous data
 
     const nameDiv = document.getElementById("pgn-title-container");
     nameDiv.textContent = "Source Address " + item.address + ": " + item.name;
+    // const pgnDiv = document.createElement('div');
+    // pgnDiv.className = 'pgns';
+    // const header_txt = document.createElement('span');
+    // header_txt.textContent = ""
+    // pgnDiv.appendChild(header_txt)
+}
 
-    const pgnDiv = document.createElement('div');
-    pgnDiv.className = 'pgns';
-    const header_txt = document.createElement('span');
-    header_txt.textContent = ""
-    pgnDiv.appendChild(header_txt)
+
+function displayPGN(item) {
+    // console.log("Display PGN")
+    // console.log(item);
+    
+    
+    pgnDiv = document.getElementById("pgn-container")
     for (const pgn in item.pgns) {
-            if (item.pgns.hasOwnProperty(pgn)) {
-                const values = item.pgns[pgn];
+        if (item.pgns.hasOwnProperty(pgn)) {
+            const values = item.pgns[pgn];
+            let button_label = document.querySelector(`label[data-key="${pgn}_label"]`);
+            let button = document.querySelector(`button[data-key="${pgn}"]`);
+            if (button_label) {
+                // Update existing button text
+                button_label.textContent = `${pgn} (${values.id}) ${values.time_delta} [${values.count}]`;
+            } 
+            else {
+                
                 
                 const button = document.createElement('button');
                 button.setAttribute('class','pgn-button')
@@ -541,6 +561,7 @@ function displayPGN(item) {
 
                 const label = document.createElement('label');
                 label.setAttribute('for', `checkbox_${pgn}`);
+                label.setAttribute('data-key', `${pgn}_label`);
                 label.textContent = `${pgn} (${values.id}) ${values.time_delta} [${values.count}]`;
 
                 const checkbox = document.createElement('input');
@@ -563,16 +584,19 @@ function displayPGN(item) {
                 });
                 // Append the button to the buttons container
                 pgnDiv.appendChild(button);
-                pgnDiv.appendChild(document.createElement('br'));
+                // pgnDiv.appendChild(document.createElement('br'));
                 // If this is the last clicked button, ensure it remains active and display its data
-                if (lastClickedPGNButton && lastClickedPGNButton.getAttribute('data-key') === pgn) {
+                
+            }
+            
+            if (lastClickedPGNButton && lastClickedPGNButton.getAttribute('data-key') === pgn) {
                     button.classList.add('active');
                     displayData(values);
-                }
             }
+        
         }
-    // Append the item div to the data container
-    dataContainer.appendChild(pgnDiv);
+    
+    }
 }
 
 function convertHexToDecimal(hexString) {
@@ -610,6 +634,10 @@ function setContainerHeight() {
         const tableContainer = document.getElementById('table-container');
         const containerHeight = tableContainer.parentElement.clientHeight;
         tableContainer.style.height = `${containerHeight}px`;
+        
+        const pgnContainer = document.getElementById('pgn-container');
+        const pgnContainerHeight = pgnContainer.parentElement.clientHeight;
+        pgnContainer.style.height = `${pgnContainerHeight}px`;
     }
 
 function appendDataToTable(data) {

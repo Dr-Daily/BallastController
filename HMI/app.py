@@ -342,23 +342,13 @@ def write_to_db(table_name):
                         INSERT INTO {table_name} (interface, sa, pgn, timestamp, da, can_id, data_hex, data_bytes)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     ''', table_data)
-                # cursor = conn.cursor()
-                # cursor.execute('BEGIN;')
-                # for item in table_data:
-                #     cursor.execute(f'''
-                #         INSERT INTO {table_name} (interface, sa, pgn, timestamp, da, can_id, data_hex, data_bytes)
-                #         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                #     ''', item)
-                # cursor.execute('COMMIT;')
-                # cursor.close()
+                    #logger.debug(f"Inserted {len(table_data)} lines into the database.")
             except sqlite3.Error as e:
                 logger.warning(f"SQLite transaction error: {e}")
             except Exception as e:
                 logger.warning(f"Database error: {e}")
             finally:
                 conn.close()
-            #logger.debug(f"Inserted {len(table_data)} lines into the database.")
-        
     
 
 ################################################

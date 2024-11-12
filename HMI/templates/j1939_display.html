@@ -1,7 +1,7 @@
 <!-- templates/j1939_display.html -->
 {% extends 'base.html' %}
 
-{% block title %}Ballast Controller{% endblock %}
+{% block title %}J1939 Display{% endblock %}
 
 {% block content %}
 
@@ -633,11 +633,11 @@ function interpolateColor(value, min, max) {
 function setContainerHeight() {
         const tableContainer = document.getElementById('table-container');
         const containerHeight = tableContainer.parentElement.clientHeight;
-        tableContainer.style.height = `${containerHeight}px`;
+        //tableContainer.style.height = `${containerHeight}px`;
         
         const pgnContainer = document.getElementById('pgn-container');
         const pgnContainerHeight = pgnContainer.parentElement.clientHeight;
-        pgnContainer.style.height = `${pgnContainerHeight}px`;
+        //pgnContainer.style.height = `${pgnContainerHeight}px`;
     }
 
 function appendDataToTable(data) {

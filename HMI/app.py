@@ -154,7 +154,7 @@ processed_data_queue = queue.Queue(5000)
 summary_data_queue = queue.Queue(2) # this is a holding queue for data. 
 
 # Setup CAN interfaces (adjust the settings according to your hardware)
-#can_interfaces = ['can0', 'can1']
+#can_interfaces = ['can0', 'can0']
 can_interfaces = ['can0',]
 can_bitrates = [250000,]
 
@@ -327,8 +327,9 @@ def write_to_db(table_name):
             ''')
     conn.commit()
     cursor.close()
-    table_data = []
     while True:
+        table_data = []
+        time.sleep(UPDATE_PERIOD)
         while not processed_data_queue.empty():
             #data = (interface, sa, pgn, can_time, da, can_id, can_data_string, can_data)
             data = processed_data_queue.get() 
@@ -352,10 +353,8 @@ def write_to_db(table_name):
             except Exception as e:
                 logger.warning(f"Database error: {e}")
             #logger.debug(f"Inserted {len(table_data)} lines into the database.")
-            table_data = []
-        time.sleep(UPDATE_PERIOD)
         
-
+    
 
 ################################################
 # Pages

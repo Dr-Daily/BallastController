@@ -336,22 +336,27 @@ def write_to_db(table_name):
             table_data.append(data)
         if logging_active.is_set():  # check to see if logging is active    
             try:
-                cursor = conn.cursor()
-                cursor.execute('BEGIN;')
-                for item in table_data:
-                    cursor.execute(f'''
+                conn = sqlite3.connect(DATABASE)
+                with conn:
+                    conn.executemany(f'''
                         INSERT INTO {table_name} (interface, sa, pgn, timestamp, da, can_id, data_hex, data_bytes)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', item)
-                cursor.execute('COMMIT;')
-                cursor.close()
+                    ''', table_data)
+                # cursor = conn.cursor()
+                # cursor.execute('BEGIN;')
+                # for item in table_data:
+                #     cursor.execute(f'''
+                #         INSERT INTO {table_name} (interface, sa, pgn, timestamp, da, can_id, data_hex, data_bytes)
+                #         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                #     ''', item)
+                # cursor.execute('COMMIT;')
+                # cursor.close()
             except sqlite3.Error as e:
-                cursor = conn.cursor()
-                cursor.execute('ROLLBACK;')
-                cursor.close()
                 logger.warning(f"SQLite transaction error: {e}")
             except Exception as e:
                 logger.warning(f"Database error: {e}")
+            finally:
+                conn.close()
             #logger.debug(f"Inserted {len(table_data)} lines into the database.")
         
     

@@ -1,5 +1,5 @@
 #!/python
-from flask import Flask, jsonify,render_template, request, send_file
+from flask import Flask, jsonify,render_template, request, send_file, Response
 from flask_socketio import SocketIO, emit #sudo apt install python3-flask-socketio -y
 import csv
 import io
@@ -154,7 +154,7 @@ processed_data_queue = queue.Queue(5000)
 summary_data_queue = queue.Queue(2) # this is a holding queue for data. 
 
 # Setup CAN interfaces (adjust the settings according to your hardware)
-#can_interfaces = ['can0', 'can0']
+#can_interfaces = ['can0', 'can1']
 can_interfaces = ['can0',]
 can_bitrates = [250000,]
 
@@ -486,32 +486,78 @@ def download_db():
                      as_attachment=True,
                      download_name=f'{DATABASE}')
 
+def generate_csv( table_name, chunk_size=100000):
+    # Connect to the SQLite database
+    conn =  get_db()
+    cursor = conn.cursor()
+
+    # Get column headers
+    cursor.execute(f"SELECT * FROM {table_name} LIMIT 1")
+    headers = [description[0] for description in cursor.description]
+
+    # Create a CSV writer that writes to an in-memory list
+    yield ','.join(headers) + '\n'  # Write header row
+
+    offset = 0
+    while True:
+        # Fetch a chunk of rows
+        cursor.execute(f"SELECT * FROM {table_name} LIMIT {chunk_size} OFFSET {offset}")
+        rows = cursor.fetchall()
+        if not rows:
+            break
+
+        # Write rows to CSV format and yield each row
+        for row in rows:
+            yield ','.join(map(str, row)) + '\n'
+
+        # Move to the next chunk
+        offset += chunk_size
+
+    # Close the database connection
+    conn.close()
+
 @app.route('/api/download', methods=['POST'])
 def download_table():
     table_name = request.form['table_name']
     if not table_name:
         return jsonify({"error": "table_name parameter is required"}), 400
-    
+
+    # Stream the CSV to the browser
+    response = Response(generate_csv(table_name), mimetype='text/csv')
+    response.headers.set("Content-Disposition", "attachment", filename="can_data_output.csv")
+    return response
+
+    chunk_size = 10000
     try:
         #connect to the database
         conn = get_db()
         cursor = conn.cursor()
     
-        query = f"SELECT * FROM {table_name}"
-        cursor.execute(query)
-        rows = cursor.fetchall()
+         # Open the CSV file for writing
+        with open(f"{table_name}.csv", 'w', newline='') as csv_file:
+            writer = None
+            
+            # Loop through the data in chunks
+            offset = 0
+            while True:
+                # Execute a query to fetch a chunk of rows
+                cursor.execute(f"SELECT * FROM {table_name} LIMIT {chunk_size} OFFSET {offset}")
+                rows = cursor.fetchall()
+                if not rows:
+                    break
+                
+                # Initialize CSV writer with headers only once
+                if writer is None:
+                    headers = [description[0] for description in cursor.description]
+                    writer = csv.writer(csv_file)
+                    writer.writerow(headers)
 
-        # Get column names
-        column_names = [description[0] for description in cursor.description]
+                # Write chunk of rows to CSV
+                writer.writerows(rows)
+                
+                # Increment the offset to fetch the next chunk
+                offset += chunk_size
 
-        # Create a CSV file in memory
-        output = io.StringIO()
-        writer = csv.writer(output)
-        writer.writerow(column_names)  # write the header
-        writer.writerows(rows)
-
-        # Set the CSV file's pointer to the beginning
-        output.seek(0)
         logger.debug(f"Returning {table_name}.csv")
         # Serve the CSV file
         return send_file(

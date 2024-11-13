@@ -527,56 +527,6 @@ def download_table():
     response.headers.set("Content-Disposition", "attachment", filename="can_data_output.csv")
     return response
 
-    chunk_size = 10000
-    try:
-        #connect to the database
-        conn = get_db()
-        cursor = conn.cursor()
-    
-         # Open the CSV file for writing
-        with open(f"{table_name}.csv", 'w', newline='') as csv_file:
-            writer = None
-            
-            # Loop through the data in chunks
-            offset = 0
-            while True:
-                # Execute a query to fetch a chunk of rows
-                cursor.execute(f"SELECT * FROM {table_name} LIMIT {chunk_size} OFFSET {offset}")
-                rows = cursor.fetchall()
-                if not rows:
-                    break
-                
-                # Initialize CSV writer with headers only once
-                if writer is None:
-                    headers = [description[0] for description in cursor.description]
-                    writer = csv.writer(csv_file)
-                    writer.writerow(headers)
-
-                # Write chunk of rows to CSV
-                writer.writerows(rows)
-                
-                # Increment the offset to fetch the next chunk
-                offset += chunk_size
-
-        logger.debug(f"Returning {table_name}.csv")
-        # Serve the CSV file
-        return send_file(
-            io.BytesIO(output.getvalue().encode()),
-            mimetype='text/csv',
-            as_attachment=True,
-            download_name=f'{table_name}.csv'
-        )
-    
-    except sqlite3.Error as e:
-        logger.warning(str(e))
-        return jsonify({"error": str(e)}), 500    
-    except Exception as e:
-        logger.warning(str(e))
-        return jsonify({'error': str(e)}), 500
-    finally:
-        cursor.close()
-        conn.close()
-
 def get_ip_address():
     ip_addresses = {}
     for interface, addrs in psutil.net_if_addrs().items():

@@ -1,9 +1,140 @@
 <!-- templates/remote_rudder.html -->
 {% extends 'base.html' %}
 
-{% block title %}Remote Rudder{% endblock %}
+{% block title %}Heading & Rudder{% endblock %}
 
 {% block content %}
-<h1>Remote Rudder</h1>
-Work in progress.
+<style>
+    
+
+
+/* ---------- MAIN CONTENT : 3 columns ---------- */
+.main-grid{
+    grid-area:main;
+    display:grid;
+    grid-template-columns: auto 1fr auto;        /* left | center | right */
+    gap:0;                                      /* no gutters            */
+    height:100%;                                /* fill row              */
+    align-items:middle;                          /* vertical centre       */
+    outline: 1px dotted yellow; /* for debugging */
+    
+}
+
+.side-row{
+    display:flex;
+}
+
+/* Goal PORT at *top‑right* of its cell */
+#btnPortGoal{
+    margin-left:auto;      /* push to right edge */
+    align-self:flex-start; /* stick to top edge  */
+    background-color: transparent;
+    border: none;
+}
+
+
+/* Rudder PORT at *bottom‑right* of its cell */
+#btnPortRudder{
+    margin-left:auto;      /* right edge                  */
+    align-self:flex-end;   /* bottom edge                 */
+    margin-bottom:0;       /* (ensure no extra gap)       */
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+#btnStarGoal   { margin-right:auto; align-self:flex-start; background-color: transparent; border: none;}
+#btnStarRudder { margin-top:auto; align-self:flex-end;  background-color: transparent; border: none;}
+
+
+/* ---------- SIDE COLUMNS : 3 rows each ---------- */
+.side-col{
+    display:grid;
+    grid-template-rows: auto 1fr auto;          /* top | middle | bottom */
+    place-items:center;                         /* centre content in cells */
+    outline: 1px dotted yellow;
+}
+
+/* keep arrow buttons a fixed visual size */
+/* both top & bottom side‑row images */
+.side-col img{
+    max-width: 37vmin;
+    width: 100%;           /* scale down with the column                */
+    height: auto;
+    cursor:pointer;
+    outline: 1px dotted yellow;
+}
+
+ 
+
+/* ---------- CENTER COLUMN : flex-centred canvas ---------- */
+.center-col{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    outline: 1px dotted yellow;
+}
+
+/* perfectly round compass, scaled to shortest of the three columns */
+canvas#compass{
+    aspect-ratio:1/1; 
+    background:#fafafa; 
+    height: 100%;          /* takes the full row height            */
+    border-radius: 50%;
+    display: block;
+}
+
+
+</style>
+
+<div class="main-grid">
+  <!-- <div id="left-outside" style="display:">L</div> -->
+  <!-- LEFT COLUMN -->
+  <div class="side-col" id="left">
+    <div class="port-side-row top" >
+      <button class="btnPortGoal" id="btnPortGoal">
+      <img src="{{ url_for('static', filename='images/RedPortArrowLabeled.png') }}"
+        alt="Port">
+     </button>  
+    </div>
+    <div class="port-side-row middle" id="leftMiddle">Steering Goal</div>
+    <div class="port-side-row bottom" id="leftBottom"> 
+        <button class="btnPortRudder" id="btnPortRudder">
+            <img src="{{ url_for('static', filename='images/RudderArrowLeft.png') }}"
+                alt="Port Rudder">
+        </button>  
+    </div>
+  </div>
+
+  <!-- CENTER COLUMN (compass only) -->
+  <div class="center-col"  id="center">
+    <canvas id="compass"></canvas>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="side-col" id="right">
+    <div class="star-side-row top">
+      <button class="btnStarGoal" id="btnStarGoal">
+        <img src="{{ url_for('static', filename='images/GreenStarboardArrowLabeled.png') }}"
+        alt="Starboard">
+    </div>
+    <div class="star-side-row middle" id="rightMiddle">Steering Val</div>
+    <div class="star-side-row bottom" id="rightBottom">
+        <button class="btnStarRudder" id="btnStarRudder">
+            <img src="{{ url_for('static', filename='images/RudderArrowRight.png') }}"
+                alt="Starboard Rudder">
+        </button>
+    </div>
+  </div>
+  <!-- <div id="right-outside">R</div> -->
+  
+</div>
+
+
+
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/compass.js') }}" defer> </script>
 {% endblock %}

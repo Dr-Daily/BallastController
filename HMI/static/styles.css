@@ -8,17 +8,14 @@ body {
     height: 100vh; 
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
-    margin: 0;
+    grid-template-rows: auto 1fr auto;   /* header | main | footer  */
+    grid-template-areas:
+        "hdr"
+        "main"
+        "ftr";margin: 0;
     padding: 0;
 }
-.content {
-    text-align: center;
-    justify-content: stretch;
-    /* border: 1px solid red;  */
-    display: flex;
-    height: 100%; 
-}
+
 header, footer {
     color: white;
     text-align: center;
@@ -30,7 +27,8 @@ header, footer {
 }
 header {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
+    grid-template-columns: 1fr 1fr 1fr 1fr auto;
+    grid-area: hdr;
     background-color: rgb(11, 69, 11);
 }
 /* .center-header {
@@ -40,6 +38,7 @@ header {
 footer {
     display: grid;
     grid-template-columns: auto 1fr auto;
+    grid-area: ftr;
     background-color: blue;
 }
 /* .left-footer {
@@ -173,3 +172,50 @@ select {
     font-family: Tahoma, sans-serif;
 
 }
+
+/* #heading-control {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 100%;            /* anchor */
+ */
+
+/* 1. The flex box that holds the compass gets proper centring */
+.content {
+    text-align: center;
+    display: flex;
+    /*align-items: center;      /* vertical centre */
+    /*justify-content: center;  /* horizontal centre */
+    justify-content: stretch; /*   stretch to fill the viewport */
+    height: 100%;             /* already set */
+    /* width:100%; */
+    /*position: relative;       /* lets goal-buttons absoluteposition */
+}
+
+/* 2. Let the canvas always be a perfect circle that fills the
+      *smaller* viewport dimension (minus header+footer).          */
+canvas#compass{
+    /* occupy the smaller side of the free viewport */
+    width:75vmin;          /* vmin = min(vw, vh)  */
+    max-height:100%;        /* don’t stick out of .content */
+    aspect-ratio:1/1;       /* keeps perfect circle         */
+    border-radius:50%;      /* circle clipping (optional)   */
+    display:block;          /* kill inline gap              */
+    background:#fafafa;     /* or transparent */
+    transform:translate(100%, 0%);
+}
+
+#goal-buttons{
+    position:absolute;
+    left:50%; top:50%;
+    transform:translate(-50%, -50%);     /* centre of canvas */
+    pointer-events:none;                 /* let canvas get drags */
+}
+
+#goal-buttons img{
+    width:180px;                         /* size to taste      */
+    pointer-events:auto;                 /* but buttons clickable */
+}
+
+/* offset each button around the circle rim */
+#btnPort  { transform:translate(-420px, -90px); }   /*  adjust radius+angle */
+#btnStar  { transform:translate( 240px, -90px); }

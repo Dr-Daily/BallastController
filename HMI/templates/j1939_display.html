@@ -126,9 +126,14 @@
         text-align: center;
         width: 100%;
     }
-
+    .three-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0px;
+        overflow:scroll;
+    }
 </style>
-
+<div class="three-columns">
 <div class="sa-container">
     <div class="sa-button-container">
         <form  id="bitrate-form" method="POST">
@@ -250,6 +255,7 @@
 <!-- <div class="grid-cell" id="j1939-graphs"> -->
     <!-- Data will be dynamically displayed here -->
 <!-- </div> -->
+</div>
 
 <script type="text/javascript">
 
@@ -284,9 +290,9 @@ document.addEventListener("DOMContentLoaded", () => {
             startLoggingButton.style.display = 'block';
         }
 
-        for (const sa in CANData.can0.source) {
-            if (CANData.can0.source.hasOwnProperty(sa)) {
-                const item = CANData.can0.source[sa];
+        for (const sa in CANData.can1.source) {
+            if (CANData.can1.source.hasOwnProperty(sa)) {
+                const item = CANData.can1.source[sa];
                 let button = document.querySelector(`button[data-key="${sa}"]`);
                 if (button) {
                     // Update existing button text

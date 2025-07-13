@@ -1,0 +1,29 @@
+<!-- templates/Address Claim.html -->
+{% extends 'base.html' %}
+
+{% block title %}Utility{% endblock %}
+
+{% block content %}
+<h1>Utility</h1>
+<button class="header-button" onclick="systemShutdown()">Shutdown</button>
+<script>
+    function systemShutdown() {
+        if (confirm("Are you sure you want to shut down the system?")) {
+            fetch('/api/shutdown', {
+                method: 'GET'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('System is shutting down');
+                } else {
+                    alert('Error: ' + data.output);
+                }
+            })
+            .catch(error => {
+                alert('Request failed: ' + error);
+            });
+        }
+    }
+</script>
+{% endblock %}

@@ -2,7 +2,8 @@
 (function () {
   // let heading = "S", rudder = 'r', goal = 'f', speed = null; // initial values
   let heading = -3166, rudder = 22, goal = 270, speed = 5.3; // initial values
-
+  let desired_goal = goal; // for the draggable handle
+  let steer = 0, steer_goal = 0; // initial values
   const canvas = document.getElementById('compass');
   const ctx    = canvas.getContext('2d');
   let R      = canvas.height / 2;          // radius
@@ -13,22 +14,48 @@
   const dial       = { dragging:false };
 
   window.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded: compass.js');
+    const serverIp = "{{ server_ip }}";
+    const socket = io(`${serverIp}:5000`);
+    socket.on('connect', function() {
+        console.log('Connected to WebSocket for compass updates.');
+    });
+    socket.on('disconnect', function() {
+        console.log('Disconnected from WebSocket for compass updates.');
+    });
+
+
+
+    socket.on('nav_update', data => {
+      console.log('[nav_update]', data);
+      heading    = clamp360(data.heading);
+      rudder     = data.rudder;
+      speed      = data.speed;
+      goal       = clamp360(data.hdg_goal);
+      steer      =  data.steer;
+      steer_goal = data.steer_goal;    
+    });
+    
+    /* ── set up buttons for goal adjustment ──────────────── */
     const btnPort  = document.getElementById('btnPortGoal');
     const btnStar  = document.getElementById('btnStarGoal');
 
     if (btnPort) {
       btnPort.addEventListener('click', () => {
-        goal = clamp360(goal - 1);             // adjust step as you like
-        socket.emit('set_goal', { goal });
+        desired_goal = clamp360(goal - 1);             // adjust step as you like
+        
       });
     }
 
     if (btnStar) {
       btnStar.addEventListener('click', () => {
-        goal = clamp360(goal + 1);
-        socket.emit('set_goal', { goal });
+        desired_goal = clamp360(goal + 1);
+        
       });
     }
+
+    
+    
   });
   
   const dpr = window.devicePixelRatio || 1;
@@ -54,9 +81,7 @@
     R = sideCSS / 2;
   }
 
-  /* run after DOM is parsed & on every resize */
-  window.addEventListener('DOMContentLoaded', resizeCanvas);
-  window.addEventListener('resize',           resizeCanvas);
+
 
 
 
@@ -118,8 +143,10 @@
   }
 
   /* Run once after the page loads, then on every resize/rotate */
+    /* run after DOM is parsed & on every resize */
+  window.addEventListener('DOMContentLoaded', resizeCanvas);
+  window.addEventListener('resize',           resizeCanvas);
   window.addEventListener('load',   resizeCanvas);
-  window.addEventListener('resize', resizeCanvas);
   canvas.addEventListener('mousedown',  e => tryStartDrag(e));
   canvas.addEventListener('touchstart', e => tryStartDrag(e.touches[0]));
   window.addEventListener('mousemove',  e => moveDrag(e));
@@ -151,16 +178,8 @@
     const dy = -y;
     let ang  = Math.atan2(dx, dy) * 180 / Math.PI;    // −180…180
     desired_goal = clamp360(ang+heading); // 0…360
-    // console.log('[moveDrag]', { x, y, dx, dy, desired_goal });
-
-    /* push it to the server if you’d like other clients / the Pi to see it */
-    socket.emit('set_goal', { desired_goal });
-    //debugging: Delete the next line to stop
-    goal = desired_goal; // for testing, set goal immediately
     
-    // console.log(`goal set to ${desired_goal}°`); // log the new goal
-
-    // (no need to call draw(); the animation loop will pick it up)
+    
   }
 
   function handleDblClick(evt) {
@@ -168,25 +187,11 @@
 
     /* Only react if the pointer is inside the handle */
     if (!hitHandle(x, y)) {
-      goal = heading;                                // snap!
-      socket.emit('set_goal', { goal });             // notify others
-      console.log('[dblclick] goal ⇢ heading', goal);
+      desired_goal = heading;
+     
     }
   }
 
-
-  const socket = io({ path: '/socket.io', transports: ['websocket'] })
-                  .connect(window.location.origin + '/nav');
-
-  
-
-  socket.on('nav_update', ({ heading: h, rudder: r, goal: g, speed: s }) => {
-    heading = clamp360(h);
-    rudder  = r;
-    goal    = clamp360(g);
-    speed   = s;
-    console.log(`heading: ${heading}, rudder: ${rudder}, goal: ${goal}, speed: ${speed}`);    
-  });
 
   function draw() {
     // 1. Reset transform so clearRect wipes the whole buffer

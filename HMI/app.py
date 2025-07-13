@@ -1,5 +1,5 @@
 #!/python
-from flask import Flask, jsonify,render_template, request, send_file, Response
+from flask import Flask, jsonify, render_template, request, send_file, Response
 from flask_socketio import SocketIO, emit #sudo apt install python3-flask-socketio -y
 import csv
 import io
@@ -14,6 +14,7 @@ import threading
 import queue
 import logging
 import struct
+import math
 
 DATABASE = 'can_messages.db'
 
@@ -30,6 +31,18 @@ socketio = SocketIO(app,async_mode='threading', cors_allowed_origins="*")
 # If that's not enough, run
 # journalctl -r 
 # to get the tail end of the system journal
+
+# ── shared state ──────────────────────────────────────────────────────────────
+heading_deg          = 0.0     # 0-359.999  (0 = true north)
+rudder_angle_deg     = 0.0     # positive = starboard, negative = port
+
+
+
+
+
+
+hdg_lock   = threading.Lock()  # protect concurrent updates
+
 # Taken from the Global Source Addresses (B2) tab of the J1939DA_Feb24
 j1939_SA={
 0	:{'name':"Engine #1"},
@@ -152,10 +165,11 @@ def get_sa_name(sa):
 raw_data_queue = queue.Queue(5000)
 processed_data_queue = queue.Queue(5000)
 summary_data_queue = queue.Queue(2) # this is a holding queue for data. 
+nav_data_queue = queue.Queue(5) # this is a holding queue for data.
 
 # Setup CAN interfaces (adjust the settings according to your hardware)
 #can_interfaces = ['can0', 'can1']
-can_interfaces = ['can0',]
+can_interfaces = ['can1',]
 can_bitrates = [250000,]
 
 summary_data = {"total_count":0}
@@ -164,6 +178,7 @@ for i in can_interfaces:
                         "count":0,
                         "source":{}
                        }
+          
                 
 
 # Control flags for logging
@@ -176,6 +191,7 @@ logger = logging.getLogger()
 UPDATE_PERIOD = 0.91  # seconds
 STATS_UPDATE_PERIOD = 0.29
 BALLAST_UPDATE_TIME = 0.37
+NAV_BROADCAST_PERIOD = 0.23
 
 # Struct format for CAN frame
 can_frame_format = "<lB3x8s"
@@ -246,10 +262,29 @@ def unpack_CAN(can_packet):
         can_id_string = "{:03X}".format(can_id)
     return extended_frame,can_id, can_dlc, can_data, can_id_string
 
+def autopilot():
+    """
+    This function is a placeholder for autopilot functionality.
+    It can be extended to include logic for controlling the vessel's autopilot.
+    """
+    while True:
+        # Placeholder for autopilot logic
+        time.sleep(1)  # Simulate some processing delay
+
 def process_data():
     start_time = time.time()
     ballast_start_time = time.time()
-    ballast_data = {}
+    nav_start_time = time.time()
+    
+    ballast_data = {}   
+    nav_state = {
+        "rudder":   None,   # degrees (+starboard, –port)
+        "speed":    None,   # knots
+        "hdg_goal": None,   # degrees True
+        "heading":  None,   # degrees True
+        "steer":    None,   # helm angle or rate‑of‑turn
+        "steer_goal": None  # desired helm / ROT
+    }
     while True:
         while not raw_data_queue.empty():
             (interface, sa, pgn, can_time, da, can_id_string, can_data_string, can_data) = raw_data_queue.get()
@@ -294,12 +329,51 @@ def process_data():
                 ballast_data["port_fill"]=bool(can_data[1])
                 ballast_data["star_fill"]=bool(can_data[2])
 
+            elif pgn == 127245 and len(can_data) >= 2:          # Rudder Angle
+                angle = struct.unpack_from('<h', can_data)[0] * 0.0001 * 180/3.14159
+                nav_state["rudder"] = round(angle, 1)
+
+            elif pgn == 128259 and len(can_data) >= 2:          # Speed through water
+                spd = struct.unpack_from('<H', can_data)[0] * 0.01 * 1.94384  # m/s → kn
+                nav_state["speed"] = round(spd, 2)
+
+            elif pgn == 127237 and len(can_data) >= 2:          # Heading/Track control (goal)
+                goal = struct.unpack_from('<H', can_data)[0] * 0.0001 * 180/3.14159
+                nav_state["hdg_goal"] = round(goal, 1)
+
+            elif pgn == 127250 and len(can_data) >= 2:          # Actual vessel heading
+                hdg = struct.unpack_from('<H', can_data)[0] * 0.0001 * 180/3.14159
+                nav_state["heading"] = round(hdg, 1)
+
+            elif pgn == 61469 and len(can_data) >= 8:          # Steering angle (2nd field)
+                steer = (struct.unpack('<L', can_data[:4])[0] - 0x80000000)/1000
+                nav_state["steer"] = round(steer)
+                sgoal = (struct.unpack('<L', can_data[4:])[0] - 0x80000000)/1000
+                nav_state["steer_goal"] = round(sgoal)
+                nav_data_queue.put(nav_state)  # Add nav_state to the queue for later processing
+
 
             if (can_time - ballast_start_time) > BALLAST_UPDATE_TIME:
                 ballast_start_time = can_time
                 socketio.emit('ballast', ballast_data)  # Emit processed data to the WebSocket
-                ballast_data={}
-                #logger.debug(f"emitted message: {summary_data}")
+                logger.info(f"ballast: {ballast_data}")
+                ballast_data={"center_fill": None,
+                              "port_fill": None,
+                              "star_fill": None}
+                
+            if (can_time - nav_start_time) > NAV_BROADCAST_PERIOD:
+                nav_start_time = can_time
+                socketio.emit('nav_update', nav_state)
+                logger.info(f"nav_update: {nav_state}")
+                nav_state = {
+                    "rudder":   None,   # degrees (+starboard, –port)
+                    "speed":    None,   # knots
+                    "hdg_goal": None,   # degrees True
+                    "heading":  None,   # degrees True
+                    "steer":    None,   # helm angle or rate‑of‑turn
+                    "steer_goal": None  # desired helm / ROT
+                }
+
         time.sleep(.005)
 
 def socket_can_data(interface):
@@ -369,10 +443,13 @@ def j1939_display():
 def remote_rudder():
     return render_template('remote_rudder.html')
 
-@app.route('/mqtt')
-def mqtt():
-    return render_template('mqtt.html')
+@app.route('/address_claim')
+def address_claim():
+    return render_template('address_claim.html')
 
+@app.route('/utility')
+def utility():
+    return render_template('utility.html')
 
 ############################################
 # API calls
@@ -576,7 +653,7 @@ def can_stats():
     stats = get_can_stats(interface)
     return jsonify(stats)
 
-def start_can(bitrate):
+def start_can(bitrate,interface='can0'):
     '''
     For this function to work, we need to run `sudo visudo` and add the following lines:
     your_username ALL=(ALL) NOPASSWD: /sbin/ip link set can0 up type can bitrate
@@ -585,7 +662,7 @@ def start_can(bitrate):
     stop_can()
     
     try:
-        command = f"sudo ip link set can0 up type can bitrate {bitrate} restart-ms 100"
+        command = f"sudo ip link set {interface} up type can bitrate {bitrate} restart-ms 100"
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
             return {"status": "error", "output": result.stderr}
@@ -595,20 +672,20 @@ def start_can(bitrate):
         return {"status": "error", "output": result.stderr}
 
 @app.route('/api/start_can', methods=['POST'])
-def set_bitrate():
+def set_bitrate(interface='can0'):
     bitrate = request.form.get('bitrate')
     try:
         if int(bitrate) not in [250000, 500000, 125000, 1000000, 666666, 666000]:
             bitrate = 250000
-        result = start_can(bitrate)
+        result = start_can(bitrate, interface)
         return jsonify({'message':result, 'bitrate':bitrate})
     except ValueError:
         jsonify({"status": "error", "message": "Improper bitrate specified"}), 400
 
 @app.route('/api/stop_can', methods=['GET'])
-def stop_can():
+def stop_can(interface='can0'):
     try:
-        command = "sudo ip link set can0 down"
+        command = f"sudo ip link set {interface} down"
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
         if result.returncode !=0:
             return jsonify({"status": "error", "output": result.stderr})
@@ -666,6 +743,8 @@ def drop_table():
     conn.close()
     return jsonify({"status": f"Table {table_name} dropped"}), 200
 
+
+
 if __name__ == '__main__':
     #app.run(host='0.0.0.0', port=5000, debug=False)
     # Define the threads for reading CAN data
@@ -681,12 +760,18 @@ if __name__ == '__main__':
         info_threads.append(info)
         t.start()
         info.start()
+    logger.info(f"Started {len(read_threads)} read threads and {len(info_threads)} info threads.")
 
     logger.info(f"Setting up data processing thread.")
     # Thread for processing data
     process_thread = threading.Thread(target=process_data)
     process_thread.daemon = True
     process_thread.start()
+
+    # Thread for processing data
+    autopilot_thread = threading.Thread(target=autopilot)
+    autopilot_thread.daemon = True
+    autopilot_thread.start()
 
     # Thread for writing data to SQLite
     logger.info(f"Starting database writing thread.")

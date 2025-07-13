@@ -16,55 +16,53 @@
     gap:0;                                      /* no gutters            */
     height:100%;                                /* fill row              */
     align-items:middle;                          /* vertical centre       */
-    outline: 1px dotted yellow; /* for debugging */
     
 }
 
-.side-row{
-    display:flex;
-}
 
-/* Goal PORT at *top‑right* of its cell */
+
 #btnPortGoal{
-    margin-left:auto;      /* push to right edge */
-    align-self:flex-start; /* stick to top edge  */
+    margin-left:auto;
     background-color: transparent;
     border: none;
+    cursor: pointer;
+}
+#btnStarGoal{
+    background-color: transparent; 
+    border: none;
+    cursor: pointer;
 }
 
-
-/* Rudder PORT at *bottom‑right* of its cell */
 #btnPortRudder{
-    margin-left:auto;      /* right edge                  */
-    align-self:flex-end;   /* bottom edge                 */
-    margin-bottom:0;       /* (ensure no extra gap)       */
-    width: 100%;
-    height: 100%;
     background-color: transparent;
     border: none;
     cursor: pointer;
 }
 
-#btnStarGoal   { margin-right:auto; align-self:flex-start; background-color: transparent; border: none;}
-#btnStarRudder { margin-top:auto; align-self:flex-end;  background-color: transparent; border: none;}
+#btnStarRudder {
+    background-color: transparent; 
+    border: none;
+    cursor: pointer;
+}
 
 
 /* ---------- SIDE COLUMNS : 3 rows each ---------- */
-.side-col{
+.side-col-left,
+.side-col-right{
     display:grid;
     grid-template-rows: auto 1fr auto;          /* top | middle | bottom */
     place-items:center;                         /* centre content in cells */
     outline: 1px dotted yellow;
 }
 
-/* keep arrow buttons a fixed visual size */
-/* both top & bottom side‑row images */
-.side-col img{
+
+
+.side-col-left img,
+.side-col-right img{
     max-width: 37vmin;
     width: 100%;           /* scale down with the column                */
     height: auto;
     cursor:pointer;
-    outline: 1px dotted yellow;
 }
 
  
@@ -93,14 +91,14 @@ canvas#compass{
 <div class="main-grid">
   <!-- <div id="left-outside" style="display:">L</div> -->
   <!-- LEFT COLUMN -->
-  <div class="side-col" id="left">
+  <div class="side-col-left" id="left">
     <div class="port-side-row top" >
       <button class="btnPortGoal" id="btnPortGoal">
       <img src="{{ url_for('static', filename='images/RedPortArrowLabeled.png') }}"
-        alt="Port">
+        alt="Port Goal">
      </button>  
     </div>
-    <div class="port-side-row middle" id="leftMiddle">Steering Goal</div>
+    <div class="port-side-row middle" id="leftMiddle">Steering Goal:<br> <span font-family="monospace" id="steeringGoal">-------</span></div>
     <div class="port-side-row bottom" id="leftBottom"> 
         <button class="btnPortRudder" id="btnPortRudder">
             <img src="{{ url_for('static', filename='images/RudderArrowLeft.png') }}"
@@ -115,13 +113,13 @@ canvas#compass{
   </div>
 
   <!-- RIGHT COLUMN -->
-  <div class="side-col" id="right">
+  <div class="side-col-right" id="right">
     <div class="star-side-row top">
       <button class="btnStarGoal" id="btnStarGoal">
         <img src="{{ url_for('static', filename='images/GreenStarboardArrowLabeled.png') }}"
-        alt="Starboard">
+        alt="Starboard Goal">
     </div>
-    <div class="star-side-row middle" id="rightMiddle">Steering Val</div>
+    <div class="star-side-row middle" id="rightMiddle">Steering Val:<br> <span font-family="monospace" id="steeringValue">----</span></div>
     <div class="star-side-row bottom" id="rightBottom">
         <button class="btnStarRudder" id="btnStarRudder">
             <img src="{{ url_for('static', filename='images/RudderArrowRight.png') }}"
@@ -134,7 +132,8 @@ canvas#compass{
 </div>
 
 
-
+ 
 <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/compass.js') }}" defer> </script>
+<script src="{{ url_for('static', filename='js/compass.js') }}"> </script>
+
 {% endblock %}

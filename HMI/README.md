@@ -1,8 +1,59 @@
-# Human Machine Interface (HMI) for the Ballast Controller
-A project to automatically control filling the ballast tanks on a wakesurf boat with extra bags installed.
+# Human Machine Interface (HMI) for the Autopilot
+A project to automatically control filling Steering on a surf boat
+
+## Services needed
+
+`sudo apt install python3-eventlet`
 
 
-## Operating System Install
+```
+nano .config/systemd/user/kiosk-browser.service
+```
+
+```
+kiosk-browser.service  – Chromium kiosk for X11 sessions
+[Unit]
+Description=Chromium in kiosk mode (X11)
+After=graphical-session.target
+
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+ExecStartPre=/bin/bash -c 'source /home/jdaily/.xprofile'
+ExecStart=/usr/bin/chromium-browser \
+          --kiosk \
+          --incognito \
+          --noerrdialogs \
+          --disable-restore-session-state \
+          --disable-session-crashed-bubble \
+          --overscroll-history-navigation=0 \
+          --disable-pinch \
+          http://localhost:5000/
+Restart=on-failure
+RestartSec=2
+```
+
+```
+nano ~/.xprofile
+```
+
+```
+xrandr --output HDMI-1 --rotate left
+xinput set-prop 6 "Coordinate Transformation Matrix"  0 -1 1  1 0 0  0 0 1
+```
+
+```
+systemctl --user restart kiosk-browser.service
+```
+
+
+```
+sudo systemctl status flask-dashboard.service
+```
+to monitor do this:
+
+
+## (OLD) Operating System Install
 1. The operating system on a Raspberry Pi runs from the SD card. Therefore, we need to start with an SD card image. For this project, we started with the 64-bit Raspberry Pi OS Lite.
 
 ![pi imager](image.png)

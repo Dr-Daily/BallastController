@@ -15,11 +15,13 @@
 
   window.addEventListener('DOMContentLoaded', () => {
     console.log('DOMContentLoaded: compass.js');
-    const serverIp = "{{ server_ip }}";
+    const serverIp   = window.location.hostname;       // "192.168.222.158"
     const socket = io(`${serverIp}:5000`);
+    
     socket.on('connect', function() {
         console.log('Connected to WebSocket for compass updates.');
     });
+    
     socket.on('disconnect', function() {
         console.log('Disconnected from WebSocket for compass updates.');
     });
@@ -36,6 +38,7 @@
       steer_goal = data.steer_goal;    
     });
     
+   
     /* ── set up buttons for goal adjustment ──────────────── */
     const btnPort  = document.getElementById('btnPortGoal');
     const btnStar  = document.getElementById('btnStarGoal');

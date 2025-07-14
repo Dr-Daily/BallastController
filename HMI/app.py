@@ -19,7 +19,7 @@ import math
 DATABASE = 'can_messages.db'
 
 app = Flask(__name__)
-socketio = SocketIO(app,async_mode='threading', cors_allowed_origins="*")
+socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
 
 # After making changes, run 
 # sudo systemctl restart flask-app.service
@@ -169,7 +169,7 @@ nav_data_queue = queue.Queue(5) # this is a holding queue for data.
 
 # Setup CAN interfaces (adjust the settings according to your hardware)
 #can_interfaces = ['can0', 'can1']
-can_interfaces = ['can1',]
+can_interfaces = ['can1']
 can_bitrates = [250000,]
 
 summary_data = {"total_count":0}
@@ -185,7 +185,7 @@ for i in can_interfaces:
 logging_active = threading.Event()
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='app.py %(levelname)s:%(message)s')
+logging.basicConfig(level=logging.DEBUG, format='app.py %(levelname)s:%(message)s')
 logger = logging.getLogger()
 
 UPDATE_PERIOD = 0.91  # seconds
@@ -210,7 +210,7 @@ def read_can_data(interface):
     # Create a raw socket and bind it to the CAN interface
     sock = socket.socket(socket.AF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
     sock.bind((interface,))
-
+    logger.info(f"Listening on {interface}: {sock.getsockname()}")
     while True:
         try:
             can_packet = sock.recv(16)
@@ -234,6 +234,7 @@ def read_can_data(interface):
             sa = 0xFE #null
         try:
             raw_data_queue.put((interface, sa, pgn, can_time, da, can_id_string, can_data_string, can_data[:can_dlc]))
+            logger.debug(f"Raw data put in queue: {interface} {sa} {pgn} {can_time} {da} {can_id_string} {can_data_string}")
             summary_data['total_count']+=1
             summary_data[interface]['count']+=1
         except Exception as e:
@@ -286,10 +287,18 @@ def process_data():
         "steer_goal": None  # desired helm / ROT
     }
     while True:
-        while not raw_data_queue.empty():
-            (interface, sa, pgn, can_time, da, can_id_string, can_data_string, can_data) = raw_data_queue.get()
-            processed_data_queue.put((interface, sa, pgn, can_time, da, can_id_string, can_data_string, can_data))
+        logger.debug(f"Queue size: {raw_data_queue.qsize()}")
+        try: #while not raw_data_queue.empty():
+            (interface, sa, pgn, can_time, da, can_id_string, can_data_string, can_data) = raw_data_queue.get(timeout=1)
+            logger.debug(f"Received queue: {interface} {sa} {pgn} {can_time} {da} {can_id_string} {can_data_string}")
+        except queue.Empty:
+            # Timeout waiting for data — not a failure
+            time.sleep(.05)   
+            continue
         
+        try:
+            processed_data_queue.put((interface, sa, pgn, can_time, da, can_id_string, can_data_string, can_data))
+            
             try:
                 summary_data[interface]["source"][sa]['count'] += 1
             except KeyError:
@@ -321,7 +330,7 @@ def process_data():
             if (can_time - start_time) > STATS_UPDATE_PERIOD:
                 start_time = can_time
                 socketio.emit('message', summary_data)  # Emit processed data to the WebSocket
-                #logger.debug(f"emitted message: {summary_data}")
+                logger.debug(f"emitted message: {summary_data}")
 
             # Water level indicator added to the ballast pump lead tubes.
             if sa == 57 and pgn == 0x1F211: # Matches arduino script
@@ -373,8 +382,12 @@ def process_data():
                     "steer":    None,   # helm angle or rate‑of‑turn
                     "steer_goal": None  # desired helm / ROT
                 }
-
-        time.sleep(.005)
+        except queue.Empty:
+            # Timeout waiting for data — not a failure
+            time.sleep(.005)
+        except Exception as e:
+            logger.exception("Error in process_raw_data")
+            time.sleep(1)  # Sleep to avoid busy-waiting in case of an error
 
 def socket_can_data(interface):
     while True:
@@ -746,42 +759,47 @@ def drop_table():
 
 
 if __name__ == '__main__':
-    #app.run(host='0.0.0.0', port=5000, debug=False)
+    #socketio.run(app, host='0.0.0.0', port=5000, debug=False)
     # Define the threads for reading CAN data
     logger.info(f"Setting up read and information threads for {can_interfaces}")
     read_threads = []
     info_threads = []
     for interface in can_interfaces:
-        t = threading.Thread(target=read_can_data, args=(interface,))
-        info = threading.Thread(target=socket_can_data, args=(interface,))
-        t.daemon = True
-        info.daemon = True
-        read_threads.append(t)
-        info_threads.append(info)
-        t.start()
-        info.start()
+        ##t = threading.Thread(target=read_can_data, args=(interface,))
+        #info = threading.Thread(target=socket_can_data, args=(interface,))
+        socketio.start_background_task(read_can_data, interface)
+        socketio.start_background_task(socket_can_data, interface)
+    
+    
+        # t.daemon = True
+        # info.daemon = True
+        # read_threads.append(t)
+        # info_threads.append(info)
+        # t.start()
+        # info.start()
     logger.info(f"Started {len(read_threads)} read threads and {len(info_threads)} info threads.")
 
     logger.info(f"Setting up data processing thread.")
     # Thread for processing data
-    process_thread = threading.Thread(target=process_data)
-    process_thread.daemon = True
-    process_thread.start()
-
-    # Thread for processing data
-    autopilot_thread = threading.Thread(target=autopilot)
-    autopilot_thread.daemon = True
-    autopilot_thread.start()
+    
+    process = socketio.start_background_task(process_data)
+    process.daemon = True
+    process.start()
+    
+    # # Thread for processing data
+    # autopilot_thread = threading.Thread(target=autopilot)
+    # autopilot_thread.daemon = True
+    # autopilot_thread.start()
 
     # Thread for writing data to SQLite
-    logger.info(f"Starting database writing thread.")
-    write_thread = threading.Thread(target=write_to_db, args=("can_data",))
-    write_thread.daemon = True
-    write_thread.start()
+    # logger.info(f"Starting database writing thread.")
+    # write_thread = threading.Thread(target=write_to_db, args=("can_data",))
+    # write_thread.daemon = True
+    # write_thread.start()
     
     logger.info("Running flask app on port 5000")
     # Run Flask app with SocketIO
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True )
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
 
     # Keep the main thread alive
     try:
@@ -789,5 +807,4 @@ if __name__ == '__main__':
             time.sleep(1)
     except KeyboardInterrupt:
         print("Exiting...")
-
 
